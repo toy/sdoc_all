@@ -167,9 +167,15 @@ end
 
 class RdocAll::Plugins < RdocAll::Base
   class << self
-    def each
-      Dir['plugins/*'].each do |plugin|
-        yield plugin
+    def each(&block)
+      Dir['plugins/*'].each(&block)
+    end
+
+    def update_sources(force = false)
+      each do |plugin|
+        Dir.chdir(plugin) do
+          system('git fetch origin && git reset --hard HEAD')
+        end
       end
     end
 
