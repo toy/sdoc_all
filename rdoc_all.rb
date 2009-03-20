@@ -6,7 +6,7 @@ require 'open3'
 require 'pp'
 require 'rubygems'
 require 'rake'
-# require 'progress'
+require 'progress'
 
 class String
   def /(s)
@@ -45,10 +45,32 @@ class RdocAll::Base
     end
 
     def build_documentation(options = {})
-      @rdoc_tasks = []
       Dir.chdir(SOURSES_PATH) do
+        @@rdoc_tasks = []
+
         @subclasses.each do |subclass|
           subclass.add_rdoc_tasks
+        end
+
+        @@rdoc_tasks.each_with_progress('Building docs') do |rdoc_task|
+          File.open('.document', 'w') do |f|
+            if rdoc_task[:source_pathes].empty?
+              f.puts(rdoc_task[:base_path])
+            else
+              rdoc_task[:source_pathes].each do |source_path|
+                f.puts(rdoc_task[:base_path] / source_path)
+              end
+            end
+          end
+
+          doc_path = DOCS_PATH / rdoc_task[:base_path]
+          remove_if_present(doc_path) if Dir[doc_path / '*'].empty? || options[:force]
+          cmd = %w(hanna)
+          cmd << '-U' if options[:force]
+          cmd << '-o' << doc_path
+          cmd << '-t' << rdoc_task[:title]
+
+          system(*cmd)
         end
       end
     end
@@ -56,12 +78,7 @@ class RdocAll::Base
   protected
 
     def add_rdoc_task(base_path, source_pathes = [])
-      p [base_path, source_pathes.length]
-      # Dir.chdir(path) do
-      #   puts "Building #{path} documentation"
-      #   Dir.rmdir(DOC_DIR / path) if File.directory?(DOC_DIR / path) && Dir[DOC_DIR / path / '*'].empty?
-      #   system('hanna', '-o', DOC_DIR / path, '-t', path.sub('s/', ' — '), *pathes)
-      # end
+      @@rdoc_tasks << {:base_path => base_path, :source_pathes => source_pathes, :title => base_path.sub('s/', ' — ')}
     end
 
     def with_env(key, value)
