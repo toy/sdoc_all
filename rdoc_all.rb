@@ -53,23 +53,14 @@ class RdocAll::Base
         end
 
         @@rdoc_tasks.each_with_progress('Building docs') do |rdoc_task|
-          File.open('.document', 'w') do |f|
-            if rdoc_task[:source_pathes].empty?
-              f.puts(rdoc_task[:base_path])
-            else
-              rdoc_task[:source_pathes].each do |source_path|
-                f.puts(rdoc_task[:base_path] / source_path)
-              end
-            end
+          Dir.chdir(rdoc_task[:base_path]) do
+            doc_path = DOCS_PATH / rdoc_task[:base_path]
+            remove_if_present(doc_path) if Dir[doc_path / '*'].empty? || options[:force]
+            cmd = %w(hanna)
+            cmd << '-o' << doc_path
+            cmd << '-t' << rdoc_task[:title]
+            system(*cmd + rdoc_task[:source_pathes])
           end
-
-          doc_path = DOCS_PATH / rdoc_task[:base_path]
-          remove_if_present(doc_path) if Dir[doc_path / '*'].empty? || options[:force]
-          cmd = %w(hanna)
-          cmd << '-o' << doc_path
-          cmd << '-t' << rdoc_task[:title]
-
-          system(*cmd)
         end
       end
     end
@@ -217,4 +208,5 @@ class RdocAll::Plugins < RdocAll::Base
   end
 end
 
+RdocAll.update_sources
 RdocAll.build_documentation
