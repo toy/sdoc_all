@@ -71,24 +71,27 @@ end
 
 class RdocAll::Ruby < RdocAll::Base
   class << self
-    def update_sources
+    def update_sources(force = false)
       Net::FTP.open('ftp.ruby-lang.org') do |ftp|
         ftp.debug_mode = true
         ftp.passive = true
         ftp.login
         ftp.chdir('/pub/ruby')
         ftp.list('ruby*.tar.bz2').each do |line|
-          ruby_path, ruby = File.split(line.split.last)
-          unless File.exist?(ruby)
-            ftp.chdir('/pub/ruby' / ruby_path)
-            ftp.getbinaryfile(ruby)
+          tar_path, tar = File.split(line.split.last)
+          FileUtils.remove_entry(tar) if force
+          unless File.exist?(tar)
+            ftp.chdir('/pub/ruby' / tar_path)
+            ftp.getbinaryfile(tar)
           end
         end
       end
 
-      Dir['ruby-*.tar.bz2'].each do |ruby_tar|
-        unless File.directory?(File.basename(ruby_tar, '.tar.bz2'))
-          system('tar', '-xjf', ruby_tar)
+      Dir['ruby-*.tar.bz2'].each do |tar|
+        ruby = File.basename(tar, '.tar.bz2')
+        FileUtils.remove_entry(ruby) if force
+        unless File.directory?(ruby)
+          system('tar', '-xjf', tar)
         end
       end
     end
@@ -116,6 +119,23 @@ end
 
 class RdocAll::Rails < RdocAll::Base
   class << self
+    def each
+      Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
+        yield spec.full_name, spec.version.to_s
+      end
+    end
+
+    def update_sources(force = false)
+      each do |rails, version|
+        FileUtils.remove_entry(rails) if force
+        unless File.directory?(rails)
+          with_env 'VERSION', spec.version.to_s do
+            system("rails", rails, '--freeze')
+          end
+        end
+      end
+    end
+
     def document
       # Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
       #   rails = spec.full_name
@@ -147,6 +167,12 @@ end
 
 class RdocAll::Plugins < RdocAll::Base
   class << self
+    def each
+      Dir['plugins/*'].each do |plugin|
+        yield plugin
+      end
+    end
+
     def document
       # Dir['plugins/*'].each do |plugin|
       #   pathes = Rake::FileList.new
