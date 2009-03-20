@@ -55,7 +55,7 @@ class RdocAll::Base
   protected
 
     def add_rdoc_task(base_path, source_pathes = [])
-      p base_path
+      p [base_path, source_pathes.length]
       # Dir.chdir(path) do
       #   puts "Building #{path} documentation"
       #   Dir.rmdir(DOC_DIR / path) if File.directory?(DOC_DIR / path) && Dir[DOC_DIR / path / '*'].empty?
@@ -113,13 +113,17 @@ end
 
 class RdocAll::Gems < RdocAll::Base
   class << self
+    def each(&block)
+      Gem.source_index.each(&block)
+    end
+
     def update_sources(options = {})
     end
 
     def add_rdoc_tasks
-      # Gem.source_index.each do |gem_name, spec|
-      #   rdoc('gems' / gem_name, spec.require_paths + spec.extra_rdoc_files)
-      # end
+      each do |gem_name, spec|
+        add_rdoc_task('gems' / gem_name, spec.require_paths + spec.extra_rdoc_files)
+      end
     end
   end
 end
