@@ -15,31 +15,43 @@ class String
   end
 end
 
-DOCS_PATH = File.dirname(__FILE__)
+DOCS_PATH = File.dirname(__FILE__) / 'docs'
+SOURSES_PATH = File.dirname(__FILE__) / 'sources'
 
 class RdocAll
-  class Base
-    def self.download
+  class << self
+    def update_sources
+      Base.update_all_sources
     end
 
-    def self.document
-    end
+    # def document
+    #   Base.document_all
+    # end
+  end
+end
 
-    def self.inherited(subclass)
+class RdocAll::Base
+  class << self
+    define_method(:update_sources) {}
+    define_method(:document) {}
+
+    def inherited(subclass)
       (@subclasses ||= []) << subclass
     end
 
-    def self.download_all
-      @subclasses.each(&:download)
+    def update_all_sources
+      Dir.chdir(SOURSES_PATH) do
+        @subclasses.each(&:update_sources)
+      end
     end
 
-    def self.document_all
-      @subclasses.each(&:document)
-    end
+    # def document_all
+    #   @subclasses.each(&:document)
+    # end
 
   protected
 
-    def self.hanna(path, pathes = [])
+    def hanna(path, pathes = [])
       p path
       # Dir.chdir(path) do
       #   puts "Building #{path} documentation"
@@ -48,32 +60,41 @@ class RdocAll
       # end
     end
 
-    def self.with_env(key, value)
+    def with_env(key, value)
       old_value, ENV[key] = ENV[key], value
       yield
     ensure
       ENV[key] = old_value
     end
   end
+end
 
-  class Ruby < Base
-    def self.download
-      # Net::FTP.open('ftp.ruby-lang.org') do |ftp|
-      #   ftp.debug_mode = true
-      #   ftp.passive = true
-      #   ftp.login
-      #   ftp.chdir('/pub/ruby')
-      #   ftp.list('ruby*.tar.bz2').each do |line|
-      #     ruby_path, ruby = File.split(line.split.last)
-      #     unless File.exist?(ruby)
-      #       ftp.chdir('/pub/ruby' / ruby_path)
-      #       ftp.getbinaryfile(ruby)
-      #     end
-      #   end
-      # end
+class RdocAll::Ruby < RdocAll::Base
+  class << self
+    def update_sources
+      Net::FTP.open('ftp.ruby-lang.org') do |ftp|
+        ftp.debug_mode = true
+        ftp.passive = true
+        ftp.login
+        ftp.chdir('/pub/ruby')
+        ftp.list('ruby*.tar.bz2').each do |line|
+          ruby_path, ruby = File.split(line.split.last)
+          unless File.exist?(ruby)
+            ftp.chdir('/pub/ruby' / ruby_path)
+            ftp.getbinaryfile(ruby)
+          end
+        end
+      end
+
+      Dir['ruby-*.tar.bz2'].each do |ruby_tar|
+        unless File.directory?(File.basename(ruby_tar, '.tar.bz2'))
+          system('tar', '-xjf', ruby_tar)
+        end
+      end
     end
 
-    def self.document
+    def document
+      # fix
       # Dir['ruby-*.tar.bz2'].each do |ruby_tar|
       #   ruby = File.basename(ruby_tar, '.tar.bz2')
       #   system('tar', '-xjf', ruby_tar) unless File.directory?(ruby)
@@ -81,17 +102,21 @@ class RdocAll
       # end
     end
   end
+end
 
-  class Gems < Base
-    def self.document
+class RdocAll::Gems < RdocAll::Base
+  class << self
+    def document
       # Gem.source_index.each do |gem_name, spec|
       #   hanna('gems' / gem_name, spec.require_paths + spec.extra_rdoc_files)
       # end
     end
   end
+end
 
-  class Rails < Base
-    def self.document
+class RdocAll::Rails < RdocAll::Base
+  class << self
+    def document
       # Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
       #   rails = spec.full_name
       #   unless File.directory?(rails)
@@ -99,7 +124,7 @@ class RdocAll
       #       system("rails", rails, '--freeze')
       #     end
       #   end
-      # 
+      #
       #   pathes = Rake::FileList.new
       #   documentation_rake = rails / 'vendor/rails/railties/lib/tasks/documentation.rake'
       #   doc_rails_task = false
@@ -118,9 +143,11 @@ class RdocAll
       # end
     end
   end
+end
 
-  class Plugins < Base
-    def self.document
+class RdocAll::Plugins < RdocAll::Base
+  class << self
+    def document
       # Dir['plugins/*'].each do |plugin|
       #   pathes = Rake::FileList.new
       #   pathes.include('lib/**/*.rb')
@@ -130,14 +157,6 @@ class RdocAll
       # end
     end
   end
-
-  def self.download
-    Base.download_all
-  end
-
-  def self.document
-    Base.document_all
-  end
 end
 
-RdocAll.document
+RdocAll.update_sources
