@@ -162,7 +162,7 @@ class RdocAll::Rails < RdocAll::Base
       each do |rails, version|
         remove_if_present(rails) if options[:force]
         unless File.directory?(rails)
-          with_env 'VERSION', spec.version.to_s do
+          with_env 'VERSION', version do
             system('rails', rails, '--freeze')
           end
         end
