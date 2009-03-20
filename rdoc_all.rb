@@ -148,30 +148,22 @@ class RdocAll::Rails < RdocAll::Base
     end
 
     def add_rdoc_tasks
-      # Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
-      #   rails = spec.full_name
-      #   unless File.directory?(rails)
-      #     with_env 'VERSION', spec.version.to_s do
-      #       system("rails", rails, '--freeze')
-      #     end
-      #   end
-      #
-      #   pathes = Rake::FileList.new
-      #   documentation_rake = rails / 'vendor/rails/railties/lib/tasks/documentation.rake'
-      #   doc_rails_task = false
-      #   File.readlines(documentation_rake).each do |line|
-      #     doc_rails_task = true if line['Rake::RDocTask.new("rails")']
-      #     doc_rails_task = false if line.strip == '}'
-      #     if doc_rails_task
-      #       if line['rdoc.rdoc_files.include']
-      #         pathes.include(line[/'(.*)'/, 1])
-      #       elsif line['rdoc.rdoc_files.exclude']
-      #         pathes.exclude(line[/'(.*)'/, 1])
-      #       end
-      #     end
-      #   end
-      #   rdoc(rails, pathes)
-      # end
+      each do |rails, version|
+        Dir.chdir(rails) do
+          pathes = Rake::FileList.new
+          File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
+            true until f.readline['Rake::RDocTask.new("rails")']
+            until (line = f.readline.strip) == '}'
+              if line['rdoc.rdoc_files.include']
+                pathes.include(line[/'(.*)'/, 1])
+              elsif line['rdoc.rdoc_files.exclude']
+                pathes.exclude(line[/'(.*)'/, 1])
+              end
+            end
+          end
+          add_rdoc_task(rails, pathes.resolve)
+        end
+      end
     end
   end
 end
