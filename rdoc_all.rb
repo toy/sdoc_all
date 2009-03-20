@@ -183,13 +183,15 @@ class RdocAll::Plugins < RdocAll::Base
     end
 
     def add_rdoc_tasks
-      # Dir['plugins/*'].each do |plugin|
-      #   pathes = Rake::FileList.new
-      #   pathes.include('lib/**/*.rb')
-      #   pathes.include('README*')
-      #   pathes.include('CHANGELOG*')
-      #   rdoc(plugin, pathes)
-      # end
+      each do |plugin|
+        Dir.chdir(plugin) do
+          pathes = Rake::FileList.new
+          pathes.include('lib/**/*.rb')
+          pathes.include('README*')
+          pathes.include('CHANGELOG*')
+          add_rdoc_task(plugin, pathes.resolve)
+        end
+      end
     end
   end
 end
