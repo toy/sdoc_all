@@ -14,8 +14,9 @@ class String
   end
 end
 
-DOCS_PATH = File.dirname(__FILE__) / 'docs'
-SOURSES_PATH = File.dirname(__FILE__) / 'sources'
+BASE_PATH = File.expand_path(File.dirname(__FILE__))
+DOCS_PATH = BASE_PATH / 'docs'
+SOURSES_PATH = BASE_PATH / 'sources'
 
 class RdocAll
   class << self
