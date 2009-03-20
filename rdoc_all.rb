@@ -6,8 +6,7 @@ require 'open3'
 require 'pp'
 require 'rubygems'
 require 'rake'
-require 'activesupport'
-require 'progress'
+# require 'progress'
 
 class String
   def /(s)
@@ -20,21 +19,18 @@ SOURSES_PATH = File.dirname(__FILE__) / 'sources'
 
 class RdocAll
   class << self
-    def update_source(options = {})
+    def update_sources(options = {})
       Base.update_all_sources(options)
     end
 
-    def document(options = {})
-      Base.document_all(options)
+    def build_documentation(options = {})
+      Base.build_documentation(options)
     end
   end
 end
 
 class RdocAll::Base
   class << self
-    define_method(:update_sources) {}
-    define_method(:document) {}
-
     def inherited(subclass)
       (@subclasses ||= []) << subclass
     end
@@ -47,17 +43,18 @@ class RdocAll::Base
       end
     end
 
-    # def document_all(options = {})
-    #   Dir.chdir(SOURSES_PATH) do
-    #     @subclasses.each do |subclass|
-    #       subclass.document
-    #     end
-    #   end
-    # end
+    def build_documentation(options = {})
+      @rdoc_tasks = []
+      Dir.chdir(SOURSES_PATH) do
+        @subclasses.each do |subclass|
+          subclass.add_rdoc_tasks
+        end
+      end
+    end
 
   protected
 
-    def hanna(path, pathes = [])
+    def rdoc(path, pathes = [])
       p path
       # Dir.chdir(path) do
       #   puts "Building #{path} documentation"
@@ -102,12 +99,12 @@ class RdocAll::Ruby < RdocAll::Base
       end
     end
 
-    def document
+    def add_rdoc_tasks
       # fix
       # Dir['ruby-*.tar.bz2'].each do |ruby_tar|
       #   ruby = File.basename(ruby_tar, '.tar.bz2')
       #   system('tar', '-xjf', ruby_tar) unless File.directory?(ruby)
-      #   hanna(ruby)
+      #   rdoc(ruby)
       # end
     end
   end
@@ -115,9 +112,12 @@ end
 
 class RdocAll::Gems < RdocAll::Base
   class << self
-    def document
+    def update_sources(options = {})
+    end
+
+    def add_rdoc_tasks
       # Gem.source_index.each do |gem_name, spec|
-      #   hanna('gems' / gem_name, spec.require_paths + spec.extra_rdoc_files)
+      #   rdoc('gems' / gem_name, spec.require_paths + spec.extra_rdoc_files)
       # end
     end
   end
@@ -142,7 +142,7 @@ class RdocAll::Rails < RdocAll::Base
       end
     end
 
-    def document
+    def add_rdoc_tasks
       # Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
       #   rails = spec.full_name
       #   unless File.directory?(rails)
@@ -165,7 +165,7 @@ class RdocAll::Rails < RdocAll::Base
       #       end
       #     end
       #   end
-      #   hanna(rails, pathes)
+      #   rdoc(rails, pathes)
       # end
     end
   end
@@ -185,16 +185,16 @@ class RdocAll::Plugins < RdocAll::Base
       end
     end
 
-    def document
+    def add_rdoc_tasks
       # Dir['plugins/*'].each do |plugin|
       #   pathes = Rake::FileList.new
       #   pathes.include('lib/**/*.rb')
       #   pathes.include('README*')
       #   pathes.include('CHANGELOG*')
-      #   hanna(plugin, pathes)
+      #   rdoc(plugin, pathes)
       # end
     end
   end
 end
 
-RdocAll.update_sources
+RdocAll.build_documentation
