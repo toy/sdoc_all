@@ -54,8 +54,8 @@ class RdocAll::Base
 
   protected
 
-    def rdoc(path, pathes = [])
-      p path
+    def add_rdoc_task(base_path, source_pathes = [])
+      p base_path
       # Dir.chdir(path) do
       #   puts "Building #{path} documentation"
       #   Dir.rmdir(DOC_DIR / path) if File.directory?(DOC_DIR / path) && Dir[DOC_DIR / path / '*'].empty?
@@ -74,6 +74,10 @@ end
 
 class RdocAll::Ruby < RdocAll::Base
   class << self
+    def each(&block)
+      Dir['ruby-*'].select{ |path| File.directory?(path) }.each(&block)
+    end
+
     def update_sources(options = {})
       Net::FTP.open('ftp.ruby-lang.org') do |ftp|
         ftp.debug_mode = true
@@ -100,12 +104,9 @@ class RdocAll::Ruby < RdocAll::Base
     end
 
     def add_rdoc_tasks
-      # fix
-      # Dir['ruby-*.tar.bz2'].each do |ruby_tar|
-      #   ruby = File.basename(ruby_tar, '.tar.bz2')
-      #   system('tar', '-xjf', ruby_tar) unless File.directory?(ruby)
-      #   rdoc(ruby)
-      # end
+      each do |ruby|
+        add_rdoc_task(ruby)
+      end
     end
   end
 end
