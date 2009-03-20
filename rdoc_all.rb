@@ -66,7 +66,6 @@ class RdocAll::Base
           doc_path = DOCS_PATH / rdoc_task[:base_path]
           remove_if_present(doc_path) if Dir[doc_path / '*'].empty? || options[:force]
           cmd = %w(hanna)
-          cmd << '-U' if options[:force]
           cmd << '-o' << doc_path
           cmd << '-t' << rdoc_task[:title]
 
