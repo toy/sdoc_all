@@ -20,13 +20,13 @@ SOURSES_PATH = File.dirname(__FILE__) / 'sources'
 
 class RdocAll
   class << self
-    def update_sources
-      Base.update_all_sources
+    def update_source(options = {})
+      Base.update_all_sources(options)
     end
 
-    # def document
-    #   Base.document_all
-    # end
+    def document(options = {})
+      Base.document_all(options)
+    end
   end
 end
 
@@ -39,14 +39,20 @@ class RdocAll::Base
       (@subclasses ||= []) << subclass
     end
 
-    def update_all_sources
+    def update_all_sources(options = {})
       Dir.chdir(SOURSES_PATH) do
-        @subclasses.each(&:update_sources)
+        @subclasses.each do |subclass|
+          subclass.update_sources(options)
+        end
       end
     end
 
-    # def document_all
-    #   @subclasses.each(&:document)
+    # def document_all(options = {})
+    #   Dir.chdir(SOURSES_PATH) do
+    #     @subclasses.each do |subclass|
+    #       subclass.document
+    #     end
+    #   end
     # end
 
   protected
@@ -71,7 +77,7 @@ end
 
 class RdocAll::Ruby < RdocAll::Base
   class << self
-    def update_sources(force = false)
+    def update_sources(options = {})
       Net::FTP.open('ftp.ruby-lang.org') do |ftp|
         ftp.debug_mode = true
         ftp.passive = true
@@ -79,7 +85,7 @@ class RdocAll::Ruby < RdocAll::Base
         ftp.chdir('/pub/ruby')
         ftp.list('ruby*.tar.bz2').each do |line|
           tar_path, tar = File.split(line.split.last)
-          FileUtils.remove_entry(tar) if force
+          FileUtils.remove_entry(tar) if options[:force]
           unless File.exist?(tar)
             ftp.chdir('/pub/ruby' / tar_path)
             ftp.getbinaryfile(tar)
@@ -89,7 +95,7 @@ class RdocAll::Ruby < RdocAll::Base
 
       Dir['ruby-*.tar.bz2'].each do |tar|
         ruby = File.basename(tar, '.tar.bz2')
-        FileUtils.remove_entry(ruby) if force
+        FileUtils.remove_entry(ruby) if options[:force]
         unless File.directory?(ruby)
           system('tar', '-xjf', tar)
         end
@@ -125,9 +131,9 @@ class RdocAll::Rails < RdocAll::Base
       end
     end
 
-    def update_sources(force = false)
+    def update_sources(options = {})
       each do |rails, version|
-        FileUtils.remove_entry(rails) if force
+        FileUtils.remove_entry(rails) if options[:force]
         unless File.directory?(rails)
           with_env 'VERSION', spec.version.to_s do
             system("rails", rails, '--freeze')
@@ -171,7 +177,7 @@ class RdocAll::Plugins < RdocAll::Base
       Dir['plugins/*'].each(&block)
     end
 
-    def update_sources(force = false)
+    def update_sources(options = {})
       each do |plugin|
         Dir.chdir(plugin) do
           system('git fetch origin && git reset --hard HEAD')
