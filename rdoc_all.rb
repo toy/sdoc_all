@@ -52,6 +52,15 @@ class RdocAll::Base
           subclass.add_rdoc_tasks
         end
 
+        to_clear = Dir.glob(DOCS_PATH / '*' / '*')
+        @@rdoc_tasks.each do |rdoc_task|
+          doc_path = DOCS_PATH / rdoc_task[:base_path]
+          to_clear.delete_if{ |path| path[0, doc_path.length] == doc_path }
+        end
+        to_clear.each do |path|
+          remove_if_present(path)
+        end
+
         @@rdoc_tasks.each_with_progress('Building docs') do |rdoc_task|
           Dir.chdir(rdoc_task[:base_path]) do
             doc_path = DOCS_PATH / rdoc_task[:base_path]
@@ -208,5 +217,5 @@ class RdocAll::Plugins < RdocAll::Base
   end
 end
 
-RdocAll.update_sources
+# RdocAll.update_sources
 RdocAll.build_documentation
