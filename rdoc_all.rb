@@ -70,6 +70,10 @@ class RdocAll::Base
     ensure
       ENV[key] = old_value
     end
+
+    def remove_if_present(path)
+      FileUtils.remove_entry(path) if File.exist?(path)
+    end
   end
 end
 
@@ -87,7 +91,7 @@ class RdocAll::Ruby < RdocAll::Base
         ftp.chdir('/pub/ruby')
         ftp.list('ruby*.tar.bz2').each do |line|
           tar_path, tar = File.split(line.split.last)
-          FileUtils.remove_entry(tar) if options[:force]
+          remove_if_present(tar) if options[:force]
           unless File.exist?(tar)
             ftp.chdir('/pub/ruby' / tar_path)
             ftp.getbinaryfile(tar)
@@ -97,7 +101,7 @@ class RdocAll::Ruby < RdocAll::Base
 
       Dir['ruby-*.tar.bz2'].each do |tar|
         ruby = File.basename(tar, '.tar.bz2')
-        FileUtils.remove_entry(ruby) if options[:force]
+        remove_if_present(ruby) if options[:force]
         unless File.directory?(ruby)
           system('tar', '-xjf', tar)
         end
@@ -139,10 +143,10 @@ class RdocAll::Rails < RdocAll::Base
 
     def update_sources(options = {})
       each do |rails, version|
-        FileUtils.remove_entry(rails) if options[:force]
+        remove_if_present(rails) if options[:force]
         unless File.directory?(rails)
           with_env 'VERSION', spec.version.to_s do
-            system("rails", rails, '--freeze')
+            system('rails', rails, '--freeze')
           end
         end
       end
