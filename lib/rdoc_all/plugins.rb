@@ -1,10 +1,10 @@
-class RdocAll::Plugins < RdocAll::Base
-  class << self
-    def each(&block)
+class RdocAll
+  class Plugins < Base
+    def self.each(&block)
       Dir['plugins/*'].each(&block)
     end
 
-    def update_sources(options = {})
+    def self.update_sources(options = {})
       each do |plugin|
         Dir.chdir(plugin) do
           system('git fetch origin && git reset --hard HEAD')
@@ -12,7 +12,7 @@ class RdocAll::Plugins < RdocAll::Base
       end
     end
 
-    def add_rdoc_tasks
+    def self.add_rdoc_tasks
       each do |plugin|
         Dir.chdir(plugin) do
           pathes = Rake::FileList.new

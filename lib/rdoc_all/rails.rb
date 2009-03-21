@@ -1,12 +1,12 @@
-class RdocAll::Rails < RdocAll::Base
-  class << self
-    def each
+class RdocAll
+  class Rails < Base
+    def self.each
       Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
         yield spec.full_name, spec.version.to_s
       end
     end
 
-    def update_sources(options = {})
+    def self.update_sources(options = {})
       to_clear = Dir['rails-*']
       each do |rails, version|
         to_clear.delete(rails)
@@ -22,7 +22,7 @@ class RdocAll::Rails < RdocAll::Base
       end
     end
 
-    def add_rdoc_tasks
+    def self.add_rdoc_tasks
       each do |rails, version|
         Dir.chdir(rails) do
           pathes = Rake::FileList.new

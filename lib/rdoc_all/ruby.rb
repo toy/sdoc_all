@@ -1,14 +1,14 @@
-class RdocAll::Ruby < RdocAll::Base
-  class << self
-    def tars
+class RdocAll
+  class Ruby < Base
+    def self.tars
       Dir['ruby-*.tar.bz2']
     end
 
-    def rubys
+    def self.rubys
       Dir['ruby-*'].select{ |path| File.directory?(path) }
     end
 
-    def update_sources(options = {})
+    def self.update_sources(options = {})
       to_clear = tars
       Net::FTP.open('ftp.ruby-lang.org') do |ftp|
         ftp.debug_mode = true
@@ -43,7 +43,7 @@ class RdocAll::Ruby < RdocAll::Base
       end
     end
 
-    def add_rdoc_tasks
+    def self.add_rdoc_tasks
       rubys.each do |ruby|
         add_rdoc_task(ruby)
       end
