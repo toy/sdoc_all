@@ -236,5 +236,5 @@ class RdocAll::Plugins < RdocAll::Base
   end
 end
 
-RdocAll.update_sources
-# RdocAll.build_documentation
+# RdocAll.update_sources
+RdocAll.build_documentation
