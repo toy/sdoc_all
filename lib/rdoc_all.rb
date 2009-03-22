@@ -5,8 +5,15 @@ require 'net/ftp'
 require 'open3'
 require 'pp'
 require 'rubygems'
+require 'activesupport'
 require 'rake'
+require 'nokogiri'
 require 'progress'
+# require 'sqlite3'
+require 'erubis'
+
+__DIR__ = File.dirname(__FILE__)
+$:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
 
 class String
   def /(s)
@@ -14,227 +21,159 @@ class String
   end
 end
 
-BASE_PATH = File.expand_path(File.dirname(__FILE__))
-DOCS_PATH = BASE_PATH / 'docs'
+def with_env(key, value)
+  old_value, ENV[key] = ENV[key], value
+  yield
+ensure
+  ENV[key] = old_value
+end
+
+def remove_if_present(path)
+  FileUtils.remove_entry(path) if File.exist?(path)
+end
+
+BASE_PATH = File.expand_path(File.dirname(__FILE__) / '..')
+DOCS_PATH = BASE_PATH / 'public' / 'docs'
 SOURSES_PATH = BASE_PATH / 'sources'
 
 class RdocAll
-  class << self
-    def update_sources(options = {})
-      Base.update_all_sources(options)
+  def self.update_sources(options = {})
+    Base.update_all_sources(options)
+  end
+
+  def self.build_documentation(options = {})
+    tasks = Base.rdoc_tasks(options)
+
+    # tasks.each_with_progress('Building documentation', &:run)
+
+    # selected_tasks = []
+    # selected_tasks << tasks.find_or_first_ruby(options[:ruby])
+    # # selected_tasks += tasks.gems
+    # selected_tasks << tasks.find_or_first_rails(options[:rails])
+    # selected_tasks += tasks.plugins
+
+    links = []
+    tasks.each_with_progress('Reading indexes') do |rdoc_task|
+      doc_path = DOCS_PATH / rdoc_task.base_path
+      if File.file?(doc_path / 'index.html')
+        links << {
+          :url => '/docs' / rdoc_task.base_path / 'index.html',
+          :text => rdoc_task.title
+        }
+      end
     end
 
-    def build_documentation(options = {})
-      Base.build_documentation(options)
+    template = Erubis::Eruby.new(File.read(BASE_PATH / 'view' / 'list.rhtml'))
+    context = Erubis::Context.new(:links => links)
+    File.open(BASE_PATH / 'public' / 'index.html', 'w') do |f|
+      f.write(template.evaluate(context))
+    end
+
+    # is = IndexStore.new
+    # is.clear
+    # tasks.each_with_index_and_progress('Reading indexes') do |rdoc_task, i|
+    #   doc_path = DOCS_PATH / rdoc_task.base_path
+    #   if File.file?(doc_path / 'index.html')
+    #     %w(file class method).each do |type|
+    #       if html = File.read(doc_path / "fr_#{type}_index.html")
+    #         doc = Nokogiri::HTML(html)
+    #         doc.xpath('.//ol[@id = "index-entries"]/li').each do |entry|
+    #           sort_field = [(entry.xpath('./a').first || entry.xpath('./span').first).content, i].join(',')
+    #           entry_html = entry.to_s.gsub('href="', "href=\"/docs/#{rdoc_task.base_path}/")
+    #           is.add_entry(rdoc_task.base_path, type, sort_field, entry_html)
+    #         end
+    #       end
+    #     end
+    #   end
+    # end
+  end
+
+  class IndexStore
+    def initialize
+      create
+    end
+
+    def db
+      @db ||= SQLite3::Database.new(BASE_PATH / 'indexes.db')
+    end
+
+    def create
+      db.execute(%Q{
+        CREATE TABLE IF NOT EXISTS "entries" (
+          "document" TEXT,
+          "type" TEXT,
+          "sort_field" TEXT,
+          "html" TEXT
+        )
+      })
+    end
+
+    def clear
+      db.execute('DROP TABLE IF EXISTS "entries"')
+      create
+    end
+
+    def add_entry(document, type, sort_field, html)
+      p [document, type, sort_field, html]
+      # db.execute('INSERT INTO "entries" (document, type, sort_field, html) VALUES (?, ?, ?, ?)', document, type, sort_field, html)
     end
   end
-end
 
-class RdocAll::Base
-  class << self
-    def inherited(subclass)
-      (@subclasses ||= []) << subclass
+  class RdocTasks
+    include Enumerable
+    def initialize
+      @tasks = {}
     end
 
-    def update_all_sources(options = {})
-      Dir.chdir(SOURSES_PATH) do
-        @subclasses.each do |subclass|
-          subclass.update_sources(options)
-        end
-      end
+    def add(klass, base_path, pathes)
+      type = klass.name.split('::').last.downcase.to_sym
+      (@tasks[type] ||= []) << RdocTask.new(base_path, pathes)
     end
 
-    def build_documentation(options = {})
-      Dir.chdir(SOURSES_PATH) do
-        @@rdoc_tasks = []
-
-        @subclasses.each do |subclass|
-          subclass.add_rdoc_tasks
-        end
-
-        to_clear = Dir.glob(DOCS_PATH / '*' / '*')
-        @@rdoc_tasks.each do |rdoc_task|
-          doc_path = DOCS_PATH / rdoc_task[:base_path]
-          to_clear.delete_if{ |path| path[0, doc_path.length] == doc_path }
-        end
-        to_clear.each do |path|
-          remove_if_present(path)
-        end
-
-        @@rdoc_tasks.each_with_progress('Building docs') do |rdoc_task|
-          Dir.chdir(rdoc_task[:base_path]) do
-            doc_path = DOCS_PATH / rdoc_task[:base_path]
-            remove_if_present(doc_path) if Dir[doc_path / '*'].empty? || options[:force]
-            cmd = %w(hanna)
-            cmd << '-o' << doc_path
-            cmd << '-t' << rdoc_task[:title]
-            system(*cmd + rdoc_task[:source_pathes])
-          end
-        end
-      end
+    def length
+      @tasks.sum{ |type, tasks| tasks.length }
     end
-
-  protected
-
-    def add_rdoc_task(base_path, source_pathes = [])
-      @@rdoc_tasks << {:base_path => base_path, :source_pathes => source_pathes, :title => base_path.sub('s/', ' — ')}
-    end
-
-    def with_env(key, value)
-      old_value, ENV[key] = ENV[key], value
-      yield
-    ensure
-      ENV[key] = old_value
-    end
-
-    def remove_if_present(path)
-      FileUtils.remove_entry(path) if File.exist?(path)
-    end
-  end
-end
-
-class RdocAll::Ruby < RdocAll::Base
-  class << self
-    def tars
-      Dir['ruby-*.tar.bz2']
-    end
-
-    def rubys
-      Dir['ruby-*'].select{ |path| File.directory?(path) }
-    end
-
-    def update_sources(options = {})
-      to_clear = tars
-      Net::FTP.open('ftp.ruby-lang.org') do |ftp|
-        ftp.debug_mode = true
-        ftp.passive = true
-        ftp.login
-        ftp.chdir('/pub/ruby')
-        ftp.list('ruby-*.tar.bz2').each do |line|
-          tar_path, tar = File.split(line.split.last)
-          to_clear.delete(tar)
-          remove_if_present(tar) if options[:force]
-          unless File.exist?(tar)
-            ftp.chdir('/pub/ruby' / tar_path)
-            ftp.getbinaryfile(tar)
-          end
-        end
-      end
-      to_clear.each do |tar|
-        remove_if_present(tar)
-      end
-
-      to_clear = rubys
-      tars.each do |tar|
-        ruby = File.basename(tar, '.tar.bz2')
-        to_clear.delete(ruby)
-        remove_if_present(ruby) if options[:force]
-        unless File.directory?(ruby)
-          system('tar', '-xjf', tar)
-        end
-      end
-      to_clear.each do |ruby|
-        remove_if_present(ruby)
-      end
-    end
-
-    def add_rdoc_tasks
-      rubys.each do |ruby|
-        add_rdoc_task(ruby)
-      end
-    end
-  end
-end
-
-class RdocAll::Gems < RdocAll::Base
-  class << self
     def each(&block)
-      Gem.source_index.each(&block)
+      @tasks.each do |type, tasks|
+        tasks.each(&block)
+      end
     end
 
-    def update_sources(options = {})
+    def method_missing(method, *args, &block)
+      # if /^find_or_(first|last)_(.*)/ ===  method.to_s
+      #   tasks = @tasks[$2.to_sym] || super
+      #   name = args[0]
+      #   name && tasks.find{ |task| task.base_path[name] } || ($1 == 'first' ? tasks.first : tasks.last)
+      # else
+      @tasks[method] || super
+      # end
+    end
+  end
+
+  class RdocTask
+    attr_reader :base_path, :pathes, :title
+    def initialize(base_path, pathes)
+      @base_path = base_path
+      @pathes = pathes
+      @title = base_path.sub('s/', ' — ')
     end
 
-    def add_rdoc_tasks
-      each do |gem_name, spec|
-        add_rdoc_task('gems' / gem_name, spec.require_paths + spec.extra_rdoc_files)
+    def run
+      Dir.chdir(SOURSES_PATH / @base_path) do
+        cmd = %w(hanna)
+        cmd << '-o' << DOCS_PATH / @base_path
+        cmd << '-t' << @title
+        system(*cmd + @pathes)
       end
     end
   end
 end
 
-class RdocAll::Rails < RdocAll::Base
-  class << self
-    def each
-      Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
-        yield spec.full_name, spec.version.to_s
-      end
-    end
-
-    def update_sources(options = {})
-      to_clear = Dir['rails-*']
-      each do |rails, version|
-        to_clear.delete(rails)
-        remove_if_present(rails) if options[:force]
-        unless File.directory?(rails)
-          with_env 'VERSION', version do
-            system('rails', rails, '--freeze')
-          end
-        end
-      end
-      to_clear.each do |rails|
-        remove_if_present(rails)
-      end
-    end
-
-    def add_rdoc_tasks
-      each do |rails, version|
-        Dir.chdir(rails) do
-          pathes = Rake::FileList.new
-          File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
-            true until f.readline['Rake::RDocTask.new("rails")']
-            until (line = f.readline.strip) == '}'
-              if line['rdoc.rdoc_files.include']
-                pathes.include(line[/'(.*)'/, 1])
-              elsif line['rdoc.rdoc_files.exclude']
-                pathes.exclude(line[/'(.*)'/, 1])
-              end
-            end
-          end
-          add_rdoc_task(rails, pathes.resolve)
-        end
-      end
-    end
-  end
-end
-
-class RdocAll::Plugins < RdocAll::Base
-  class << self
-    def each(&block)
-      Dir['plugins/*'].each(&block)
-    end
-
-    def update_sources(options = {})
-      each do |plugin|
-        Dir.chdir(plugin) do
-          system('git fetch origin && git reset --hard HEAD')
-        end
-      end
-    end
-
-    def add_rdoc_tasks
-      each do |plugin|
-        Dir.chdir(plugin) do
-          pathes = Rake::FileList.new
-          pathes.include('lib/**/*.rb')
-          pathes.include('README*')
-          pathes.include('CHANGELOG*')
-          add_rdoc_task(plugin, pathes.resolve)
-        end
-      end
-    end
-  end
-end
+require 'rdoc_all/base'
+require 'rdoc_all/ruby'
+require 'rdoc_all/gems'
+require 'rdoc_all/rails'
+require 'rdoc_all/plugins'
 
 # RdocAll.update_sources
 RdocAll.build_documentation
