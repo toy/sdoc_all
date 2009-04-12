@@ -19,9 +19,8 @@ class RdocAll
           tar_path, tar = File.split(line.split.last)
           to_clear.delete(tar)
           remove_if_present(tar) if options[:force]
-          unless File.exist?(tar)
-            ftp.chdir('/pub/ruby' / tar_path)
-            ftp.getbinaryfile(tar)
+          unless File.exist?(tar) && File.size(tar) == ftp.size('/pub/ruby' / tar_path / tar)
+            ftp.getbinaryfile('/pub/ruby' / tar_path / tar)
           end
         end
       end
