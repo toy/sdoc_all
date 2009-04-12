@@ -40,8 +40,8 @@ class RdocAll
 
   protected
 
-    def self.add_rdoc_task(base_path, pathes = [])
-      @@tasks.add(self, base_path, pathes)
+    def self.add_rdoc_task(name_parts, base_path, pathes = [])
+      @@tasks.add(self, name_parts, base_path, pathes)
     end
   end
 end

@@ -44,7 +44,8 @@ class RdocAll
 
     def self.add_rdoc_tasks
       rubys.each do |ruby|
-        add_rdoc_task(ruby)
+        version = ruby.split('-', 2)[1]
+        add_rdoc_task([version], ruby)
       end
     end
   end

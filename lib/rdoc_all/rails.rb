@@ -24,19 +24,21 @@ class RdocAll
 
     def self.add_rdoc_tasks
       each do |rails, version|
-        Dir.chdir(rails) do
-          pathes = Rake::FileList.new
-          File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
-            true until f.readline['Rake::RDocTask.new("rails")']
-            until (line = f.readline.strip) == '}'
-              if line['rdoc.rdoc_files.include']
-                pathes.include(line[/'(.*)'/, 1])
-              elsif line['rdoc.rdoc_files.exclude']
-                pathes.exclude(line[/'(.*)'/, 1])
+        if File.directory?(rails)
+          Dir.chdir(rails) do
+            pathes = Rake::FileList.new
+            File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
+              true until f.readline['Rake::RDocTask.new("rails")']
+              until (line = f.readline.strip) == '}'
+                if line['rdoc.rdoc_files.include']
+                  pathes.include(line[/'(.*)'/, 1])
+                elsif line['rdoc.rdoc_files.exclude']
+                  pathes.exclude(line[/'(.*)'/, 1])
+                end
               end
             end
+            add_rdoc_task([version], rails, pathes.resolve)
           end
-          add_rdoc_task(rails, pathes.resolve)
         end
       end
     end

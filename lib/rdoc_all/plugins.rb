@@ -19,7 +19,7 @@ class RdocAll
           pathes.include('lib/**/*.rb')
           pathes.include('README*')
           pathes.include('CHANGELOG*')
-          add_rdoc_task(plugin, pathes.resolve)
+          add_rdoc_task([File.basename(plugin)], plugin, pathes.resolve)
         end
       end
     end
