@@ -44,8 +44,6 @@ class RdocAll
   def self.build_documentation(options = {})
     tasks = Base.rdoc_tasks(options)
 
-    tasks.each_with_progress('Building documentation', &:run)
-
     options[:ruby] ||= '1.8.6'
     options[:exclude] ||= %w(gems/actionmailer gems/actionpack gems/activerecord gems/activeresource gems/activesupport gems/rails)
 
@@ -62,6 +60,8 @@ class RdocAll
     selected_tasks.delete_if do |task|
       options[:exclude].any?{ |exclude| task.doc_path[exclude] }
     end
+
+    selected_tasks.each_with_progress('Building documentation', &:run)
 
     Dir.chdir(DOCS_PATH) do
       remove_if_present(PUBLIC_PATH)
