@@ -5,6 +5,7 @@ class RdocAll
     end
 
     def self.update_all_sources(options = {})
+      FileUtils.mkdir_p(SOURSES_PATH) unless File.directory?(SOURSES_PATH)
       Dir.chdir(SOURSES_PATH) do
         @subclasses.each do |subclass|
           subclass.update_sources(options)
