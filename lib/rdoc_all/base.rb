@@ -30,8 +30,24 @@ class RdocAll
         end
 
         @@tasks.each do |task|
-          doc_path = DOCS_PATH / task.base_path
-          remove_if_present(doc_path) if Dir[doc_path / '*'].empty? || options[:force]
+          doc_path = DOCS_PATH / task.doc_path
+
+          begin
+            raise 'force' if options[:force]
+            if File.exist?(doc_path)
+              unless File.directory?(doc_path)
+                raise 'not a dir' 
+              else
+                created = Time.parse(File.read(doc_path / 'created.rid'))
+                Find.find(SOURSES_PATH / task.src_path) do |path|
+                  raise "changed #{path}" if File.ctime(path) > created || File.mtime(path) > created
+                end
+              end
+            end
+          rescue => e
+            puts e
+            remove_if_present(doc_path)
+          end
         end
 
         @@tasks

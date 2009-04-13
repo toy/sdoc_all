@@ -4,20 +4,19 @@ require 'fileutils'
 require 'net/ftp'
 require 'open3'
 require 'pp'
+require 'find'
 require 'rubygems'
 require 'activesupport'
 require 'rake'
 require 'nokogiri'
 require 'progress'
-# require 'sqlite3'
-require 'erubis'
 
 __DIR__ = File.dirname(__FILE__)
 $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
 
 class String
   def /(s)
-    File.join(self, s)
+    (Pathname.new(self) + s).to_s
   end
 end
 
@@ -33,7 +32,8 @@ def remove_if_present(path)
 end
 
 BASE_PATH = File.expand_path(File.dirname(__FILE__) / '..')
-DOCS_PATH = BASE_PATH / 'public' / 'docs'
+PUBLIC_PATH = BASE_PATH / 'public'
+DOCS_PATH = BASE_PATH / 'docs'
 SOURSES_PATH = BASE_PATH / 'sources'
 
 class RdocAll
@@ -44,78 +44,49 @@ class RdocAll
   def self.build_documentation(options = {})
     tasks = Base.rdoc_tasks(options)
 
-    # tasks.each_with_progress('Building documentation', &:run)
+    tasks.each_with_progress('Building documentation', &:run)
 
-    # selected_tasks = []
-    # selected_tasks << tasks.find_or_first_ruby(options[:ruby])
-    # # selected_tasks += tasks.gems
-    # selected_tasks << tasks.find_or_first_rails(options[:rails])
-    # selected_tasks += tasks.plugins
+    options[:ruby] ||= '1.8.6'
+    options[:exclude] ||= %w(gems/actionmailer gems/actionpack gems/activerecord gems/activeresource gems/activesupport gems/rails)
 
-    links = []
-    tasks.each_with_progress('Reading indexes') do |rdoc_task|
-      doc_path = DOCS_PATH / rdoc_task.base_path
-      if File.file?(doc_path / 'index.html')
-        links << {
-          :url => '/docs' / rdoc_task.base_path / 'index.html',
-          :text => rdoc_task.title
-        }
+    selected_tasks = []
+    selected_tasks << tasks.find_or_last_ruby(options[:ruby])
+    selected_tasks << tasks.find_or_last_rails(options[:rails])
+    tasks.gems.group_by{ |task| task.name_parts[0] }.sort_by{ |name, versions| name.downcase }.each do |name, versions|
+      selected_tasks << versions.sort_by{ |version| version.name_parts[1] }.last
+    end
+    tasks.plugins.sort_by{ |task| task.name_parts[0] }.each do |task|
+      selected_tasks << task
+    end
+
+    selected_tasks.delete_if do |task|
+      options[:exclude].any?{ |exclude| task.doc_path[exclude] }
+    end
+
+    Dir.chdir(DOCS_PATH) do
+      remove_if_present(PUBLIC_PATH)
+
+      pathes = []
+      titles = []
+      urls = []
+      selected_tasks.each do |rdoc_task|
+        doc_path = DOCS_PATH / rdoc_task.doc_path
+        if File.file?(doc_path / 'index.html')
+          pathes << rdoc_task.doc_path
+          titles << rdoc_task.title
+          urls << "/docs/#{rdoc_task.doc_path}"
+        end
       end
-    end
 
-    template = Erubis::Eruby.new(File.read(BASE_PATH / 'view' / 'list.rhtml'))
-    context = Erubis::Context.new(:links => links)
-    File.open(BASE_PATH / 'public' / 'index.html', 'w') do |f|
-      f.write(template.evaluate(context))
-    end
+      cmd = %w(sdoc-merge)
+      cmd << '-o' << PUBLIC_PATH
+      cmd << '-t' << 'all'
+      cmd << '-n' << titles.join(',')
+      cmd << '-u' << urls.join(' ')
+      system(*cmd + pathes)
 
-    # is = IndexStore.new
-    # is.clear
-    # tasks.each_with_index_and_progress('Reading indexes') do |rdoc_task, i|
-    #   doc_path = DOCS_PATH / rdoc_task.base_path
-    #   if File.file?(doc_path / 'index.html')
-    #     %w(file class method).each do |type|
-    #       if html = File.read(doc_path / "fr_#{type}_index.html")
-    #         doc = Nokogiri::HTML(html)
-    #         doc.xpath('.//ol[@id = "index-entries"]/li').each do |entry|
-    #           sort_field = [(entry.xpath('./a').first || entry.xpath('./span').first).content, i].join(',')
-    #           entry_html = entry.to_s.gsub('href="', "href=\"/docs/#{rdoc_task.base_path}/")
-    #           is.add_entry(rdoc_task.base_path, type, sort_field, entry_html)
-    #         end
-    #       end
-    #     end
-    #   end
-    # end
-  end
-
-  class IndexStore
-    def initialize
-      create
-    end
-
-    def db
-      @db ||= SQLite3::Database.new(BASE_PATH / 'indexes.db')
-    end
-
-    def create
-      db.execute(%Q{
-        CREATE TABLE IF NOT EXISTS "entries" (
-          "document" TEXT,
-          "type" TEXT,
-          "sort_field" TEXT,
-          "html" TEXT
-        )
-      })
-    end
-
-    def clear
-      db.execute('DROP TABLE IF EXISTS "entries"')
-      create
-    end
-
-    def add_entry(document, type, sort_field, html)
-      p [document, type, sort_field, html]
-      # db.execute('INSERT INTO "entries" (document, type, sort_field, html) VALUES (?, ?, ?, ?)', document, type, sort_field, html)
+      File.symlink(DOCS_PATH, PUBLIC_PATH / 'docs')
+      FileUtils.copy(BASE_PATH / 'favicon.ico', PUBLIC_PATH)
     end
   end
 
@@ -140,13 +111,13 @@ class RdocAll
     end
 
     def method_missing(method, *args, &block)
-      # if /^find_or_(first|last)_(.*)/ ===  method.to_s
-      #   tasks = @tasks[$2.to_sym] || super
-      #   name = args[0]
-      #   name && tasks.find{ |task| task.base_path[name] } || ($1 == 'first' ? tasks.first : tasks.last)
-      # else
-      @tasks[method] || super
-      # end
+      if /^find_or_(first|last)_(.*)/ === method.to_s
+        tasks = @tasks[$2.to_sym] || super
+        name = args[0]
+        name && tasks.find{ |task| task.name_parts.any?{ |part| part[name] } } || ($1 == 'first' ? tasks.first : tasks.last)
+      else
+        @tasks[method] || super
+      end
     end
   end
 
