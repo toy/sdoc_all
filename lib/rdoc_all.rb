@@ -172,5 +172,5 @@ require 'rdoc_all/gems'
 require 'rdoc_all/rails'
 require 'rdoc_all/plugins'
 
-# RdocAll.update_sources
+RdocAll.update_sources
 RdocAll.build_documentation
