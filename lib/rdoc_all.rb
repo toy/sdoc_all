@@ -125,9 +125,9 @@ class RdocAll
       @tasks = {}
     end
 
-    def add(klass, base_path, pathes)
+    def add(klass, options = {})
       type = klass.name.split('::').last.downcase.to_sym
-      (@tasks[type] ||= []) << RdocTask.new(base_path, pathes)
+      (@tasks[type] ||= []) << RdocTask.new(options)
     end
 
     def length
@@ -151,19 +151,45 @@ class RdocAll
   end
 
   class RdocTask
-    attr_reader :base_path, :pathes, :title
-    def initialize(base_path, pathes)
-      @base_path = base_path
-      @pathes = pathes
-      @title = base_path.sub('s/', ' — ')
+    def initialize(options = {})
+      @options = options
+      @options[:title] = @options[:doc_path].sub('s/', ' — ') if @options[:doc_path]
+    end
+
+    def src_path
+      @options[:src_path]
+    end
+
+    def doc_path
+      @options[:doc_path]
+    end
+
+    def pathes
+      @options[:pathes]
+    end
+
+    def title
+      @options[:title]
+    end
+
+    def main
+      @options[:main]
+    end
+
+    def name_parts
+      @options[:name_parts]
     end
 
     def run
-      Dir.chdir(SOURSES_PATH / @base_path) do
-        cmd = %w(hanna)
-        cmd << '-o' << DOCS_PATH / @base_path
-        cmd << '-t' << @title
-        system(*cmd + @pathes)
+      unless File.directory?(DOCS_PATH / doc_path)
+        Dir.chdir(SOURSES_PATH / src_path) do
+          cmd = %w(sdoc)
+          cmd << '-o' << DOCS_PATH / doc_path
+          cmd << '-t' << title
+          cmd << '-T' << 'direct'
+          cmd << '-m' << main if main
+          system(*cmd + pathes)
+        end
       end
     end
   end

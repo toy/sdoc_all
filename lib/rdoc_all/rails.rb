@@ -37,7 +37,12 @@ class RdocAll
                 end
               end
             end
-            add_rdoc_task([version], rails, pathes.resolve)
+            add_rdoc_task(
+              :name_parts => [version],
+              :src_path => rails,
+              :doc_path => rails,
+              :pathes => pathes.resolve
+            )
           end
         end
       end

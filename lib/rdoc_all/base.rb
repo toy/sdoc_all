@@ -22,7 +22,7 @@ class RdocAll
 
         to_clear = Dir.glob(DOCS_PATH / '*' / '*')
         @@tasks.each do |task|
-          doc_path = DOCS_PATH / task.base_path
+          doc_path = DOCS_PATH / task.doc_path
           to_clear.delete_if{ |path| path.starts_with?(doc_path) }
         end
         to_clear.each do |path|
@@ -40,8 +40,12 @@ class RdocAll
 
   protected
 
-    def self.add_rdoc_task(name_parts, base_path, pathes = [])
-      @@tasks.add(self, name_parts, base_path, pathes)
+    def self.add_rdoc_task(options = {})
+      options[:pathes] ||= []
+      [/^readme$/i, /^readme\.(?:txt|rdoc|markdown)$/i, /^readme\./i].each do |readme_r|
+        options[:main] ||= options[:pathes].grep(readme_r).first
+      end
+      @@tasks.add(self, options)
     end
   end
 end
