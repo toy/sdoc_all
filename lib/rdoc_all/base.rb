@@ -41,6 +41,7 @@ class RdocAll
               else
                 created = Time.parse(File.read(doc_path / 'created.rid'))
                 Find.find(SOURSES_PATH / task.src_path) do |path|
+                  Find.prune if File.directory?(path) && File.basename(path)[0] == ?.
                   raise "changed #{path}" if File.ctime(path) > created || File.mtime(path) > created
                 end
               end
