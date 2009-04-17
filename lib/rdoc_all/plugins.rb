@@ -1,7 +1,7 @@
 class RdocAll
   class Plugins < Base
     def self.each(&block)
-      Dir['plugins/*'].each(&block)
+      Dir[File.expand_path('~/.plugins/*')].each(&block)
     end
 
     def self.update_sources(options = {})
@@ -19,10 +19,11 @@ class RdocAll
           pathes.include('lib/**/*.rb')
           pathes.include('README*')
           pathes.include('CHANGELOG*')
+          plugin_name = File.basename(plugin)
           add_rdoc_task(
-            :name_parts => [File.basename(plugin)],
+            :name_parts => [plugin_name],
             :src_path => plugin,
-            :doc_path => plugin,
+            :doc_path => "plugins/#{plugin_name}",
             :pathes => pathes.resolve
           )
         end
