@@ -74,86 +74,10 @@ class SdocAll
 private
 
   def self.add_default_options!(options)
-    # options.replace({}.merge(options))
     options[:base_path] = Pathname.new(options[:base_path] || Dir.pwd).freeze
     options[:public_path] = Pathname.new(options[:public_path] || options[:base_path] + 'public').freeze
     options[:docs_path] = Pathname.new(options[:docs_path] || options[:base_path] + 'docs').freeze
     options[:sources_path] = Pathname.new(options[:sources_path] || options[:base_path] + 'sources').freeze
-  end
-
-  class RdocTasks
-    include Enumerable
-    def initialize
-      @tasks = {}
-    end
-
-    def add(klass, options = {})
-      type = klass.name.split('::').last.downcase.to_sym
-      (@tasks[type] ||= []) << RdocTask.new(options)
-    end
-
-    def length
-      @tasks.sum{ |type, tasks| tasks.length }
-    end
-    def each(&block)
-      @tasks.each do |type, tasks|
-        tasks.each(&block)
-      end
-    end
-
-    def method_missing(method, *args, &block)
-      if /^find_or_(first|last)_(.*)/ === method.to_s
-        tasks = @tasks[$2.to_sym] || super
-        name = args[0]
-        name && tasks.find{ |task| task.name_parts.any?{ |part| part[name] } } || ($1 == 'first' ? tasks.first : tasks.last)
-      else
-        @tasks[method] || super
-      end
-    end
-  end
-
-  class RdocTask
-    def initialize(options = {})
-      @options = options
-      @options[:title] = @options[:doc_path].sub('s/', ' — ') if @options[:doc_path]
-    end
-
-    def src_path
-      @options[:src_path]
-    end
-
-    def doc_path
-      @options[:doc_path]
-    end
-
-    def pathes
-      @options[:pathes]
-    end
-
-    def title
-      @options[:title]
-    end
-
-    def main
-      @options[:main]
-    end
-
-    def name_parts
-      @options[:name_parts]
-    end
-
-    def run(options = {})
-      unless File.directory?(options[:docs_path] + doc_path)
-        Dir.chdir(options[:sources_path] + src_path) do
-          cmd = %w(sdoc)
-          cmd << '-o' << options[:docs_path] + doc_path
-          cmd << '-t' << title
-          cmd << '-T' << 'direct'
-          cmd << '-m' << main if main
-          system(*cmd + pathes)
-        end
-      end
-    end
   end
 end
 
@@ -162,3 +86,5 @@ require 'sdoc_all/ruby'
 require 'sdoc_all/gems'
 require 'sdoc_all/rails'
 require 'sdoc_all/plugins'
+require 'sdoc_all/rdoc_task'
+require 'sdoc_all/rdoc_tasks'
