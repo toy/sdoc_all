@@ -1,3 +1,5 @@
+require 'net/ftp'
+
 class SdocAll
   class Ruby < Base
     def self.tars
@@ -11,16 +13,17 @@ class SdocAll
     def self.update_sources(options = {})
       to_clear = tars
       Net::FTP.open('ftp.ruby-lang.org') do |ftp|
+        remote_path = Pathname.new('/pub/ruby')
         ftp.debug_mode = true
         ftp.passive = true
         ftp.login
-        ftp.chdir('/pub/ruby')
+        ftp.chdir(remote_path)
         ftp.list('ruby-*.tar.bz2').each do |line|
           tar_path, tar = File.split(line.split.last)
           to_clear.delete(tar)
           remove_if_present(tar) if options[:force]
-          unless File.exist?(tar) && File.size(tar) == ftp.size('/pub/ruby' / tar_path / tar)
-            ftp.getbinaryfile('/pub/ruby' / tar_path / tar)
+          unless File.exist?(tar) && File.size(tar) == ftp.size(remote_path + tar_path + tar)
+            ftp.getbinaryfile(remote_path + tar_path + tar)
           end
         end
       end

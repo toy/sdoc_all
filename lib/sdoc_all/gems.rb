@@ -1,3 +1,5 @@
+require 'enumerator'
+
 class SdocAll
   class Gems < Base
     def self.each(&block)
@@ -16,7 +18,7 @@ class SdocAll
         add_rdoc_task(
           :name_parts => [spec.name, spec.version],
           :src_path => spec.full_gem_path,
-          :doc_path => 'gems' / gem_name,
+          :doc_path => "gems/#{gem_name}",
           :pathes => spec.require_paths + spec.extra_rdoc_files,
           :main => main
         )

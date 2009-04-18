@@ -5,8 +5,8 @@ class SdocAll
     end
 
     def self.update_all_sources(options = {})
-      FileUtils.mkdir_p(SOURSES_PATH) unless File.directory?(SOURSES_PATH)
-      Dir.chdir(SOURSES_PATH) do
+      FileUtils.mkdir_p(options[:sources_path]) unless File.directory?(options[:sources_path])
+      Dir.chdir(options[:sources_path]) do
         @subclasses.each do |subclass|
           subclass.update_sources(options)
         end
@@ -14,16 +14,16 @@ class SdocAll
     end
 
     def self.rdoc_tasks(options = {})
-      Dir.chdir(SOURSES_PATH) do
+      Dir.chdir(options[:sources_path]) do
         @@tasks = RdocTasks.new
 
         @subclasses.each do |subclass|
           subclass.add_rdoc_tasks
         end
 
-        to_clear = Dir.glob(DOCS_PATH / '*' / '*')
+        to_clear = Dir.glob(options[:docs_path] + '*/*')
         @@tasks.each do |task|
-          doc_path = DOCS_PATH / task.doc_path
+          doc_path = options[:docs_path] + task.doc_path
           to_clear.delete_if{ |path| path.starts_with?(doc_path) }
         end
         to_clear.each do |path|
@@ -31,16 +31,16 @@ class SdocAll
         end
 
         @@tasks.each do |task|
-          doc_path = DOCS_PATH / task.doc_path
+          doc_path = options[:docs_path] + task.doc_path
 
           begin
             raise 'force' if options[:force]
             if File.exist?(doc_path)
               unless File.directory?(doc_path)
-                raise 'not a dir' 
+                raise 'not a dir'
               else
-                created = Time.parse(File.read(doc_path / 'created.rid'))
-                Find.find(SOURSES_PATH / task.src_path) do |path|
+                created = Time.parse(File.read(doc_path + 'created.rid'))
+                Find.find(options[:sources_path] + task.src_path) do |path|
                   Find.prune if File.directory?(path) && File.basename(path)[0] == ?.
                   raise "changed #{path}" if File.ctime(path) > created || File.mtime(path) > created
                 end
@@ -64,6 +64,17 @@ class SdocAll
         options[:main] ||= options[:pathes].grep(readme_r).first
       end
       @@tasks.add(self, options)
+    end
+
+    def self.with_env(key, value)
+      old_value, ENV[key] = ENV[key], value
+      yield
+    ensure
+      ENV[key] = old_value
+    end
+
+    def self.remove_if_present(path)
+      FileUtils.remove_entry(path) if File.exist?(path)
     end
   end
 end

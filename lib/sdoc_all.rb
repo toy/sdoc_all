@@ -1,47 +1,26 @@
 #!/usr/bin/ruby
 
 require 'fileutils'
-require 'net/ftp'
-require 'open3'
-require 'pp'
 require 'find'
+
 require 'rubygems'
 require 'activesupport'
 require 'rake'
-require 'nokogiri'
 require 'progress'
 
 __DIR__ = File.dirname(__FILE__)
 $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
 
-class String
-  def /(s)
-    (Pathname.new(self) + s).to_s
-  end
-end
-
-def with_env(key, value)
-  old_value, ENV[key] = ENV[key], value
-  yield
-ensure
-  ENV[key] = old_value
-end
-
-def remove_if_present(path)
-  FileUtils.remove_entry(path) if File.exist?(path)
-end
-
-BASE_PATH = File.expand_path(File.dirname(__FILE__) / '..')
-PUBLIC_PATH = BASE_PATH / 'public'
-DOCS_PATH = BASE_PATH / 'docs'
-SOURSES_PATH = BASE_PATH / 'sources'
-
 class SdocAll
   def self.update_sources(options = {})
+    add_default_options!(options)
+
     Base.update_all_sources(options)
   end
 
   def self.build_documentation(options = {})
+    add_default_options!(options)
+
     tasks = Base.rdoc_tasks(options)
 
     options[:ruby] ||= '1.8.6'
@@ -61,17 +40,19 @@ class SdocAll
       options[:exclude].any?{ |exclude| task.doc_path[exclude] }
     end
 
-    selected_tasks.each_with_progress('Building documentation', &:run)
+    selected_tasks.each_with_progress('Building documentation') do |task|
+      task.run(options)
+    end
 
-    Dir.chdir(DOCS_PATH) do
-      remove_if_present(PUBLIC_PATH)
+    Dir.chdir(options[:docs_path]) do
+      Base.remove_if_present(options[:public_path])
 
       pathes = []
       titles = []
       urls = []
       selected_tasks.each do |rdoc_task|
-        doc_path = DOCS_PATH / rdoc_task.doc_path
-        if File.file?(doc_path / 'index.html')
+        doc_path = options[:docs_path] + rdoc_task.doc_path
+        if File.file?(doc_path + 'index.html')
           pathes << rdoc_task.doc_path
           titles << rdoc_task.title
           urls << "/docs/#{rdoc_task.doc_path}"
@@ -79,15 +60,25 @@ class SdocAll
       end
 
       cmd = %w(sdoc-merge)
-      cmd << '-o' << PUBLIC_PATH
+      cmd << '-o' << options[:public_path]
       cmd << '-t' << 'all'
       cmd << '-n' << titles.join(',')
       cmd << '-u' << urls.join(' ')
       system(*cmd + pathes)
 
-      File.symlink(DOCS_PATH, PUBLIC_PATH / 'docs')
-      FileUtils.copy(BASE_PATH / 'favicon.ico', PUBLIC_PATH)
+      File.symlink(options[:docs_path], options[:public_path] + 'docs')
+      File.symlink(options[:base_path] + 'favicon.ico', options[:public_path] + 'favicon.ico') if File.exists?(options[:base_path] + 'favicon.ico')
     end
+  end
+
+private
+
+  def self.add_default_options!(options)
+    # options.replace({}.merge(options))
+    options[:base_path] = Pathname.new(options[:base_path] || Dir.pwd).freeze
+    options[:public_path] = Pathname.new(options[:public_path] || options[:base_path] + 'public').freeze
+    options[:docs_path] = Pathname.new(options[:docs_path] || options[:base_path] + 'docs').freeze
+    options[:sources_path] = Pathname.new(options[:sources_path] || options[:base_path] + 'sources').freeze
   end
 
   class RdocTasks
@@ -151,11 +142,11 @@ class SdocAll
       @options[:name_parts]
     end
 
-    def run
-      unless File.directory?(DOCS_PATH / doc_path)
-        Dir.chdir(SOURSES_PATH / src_path) do
+    def run(options = {})
+      unless File.directory?(options[:docs_path] + doc_path)
+        Dir.chdir(options[:sources_path] + src_path) do
           cmd = %w(sdoc)
-          cmd << '-o' << DOCS_PATH / doc_path
+          cmd << '-o' << options[:docs_path] + doc_path
           cmd << '-t' << title
           cmd << '-T' << 'direct'
           cmd << '-m' << main if main
@@ -171,6 +162,3 @@ require 'sdoc_all/ruby'
 require 'sdoc_all/gems'
 require 'sdoc_all/rails'
 require 'sdoc_all/plugins'
-
-SdocAll.update_sources
-SdocAll.build_documentation
