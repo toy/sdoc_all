@@ -1,4 +1,4 @@
-class RdocAll
+class SdocAll
   class Base
     def self.inherited(subclass)
       (@subclasses ||= []) << subclass

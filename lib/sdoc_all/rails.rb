@@ -1,4 +1,4 @@
-class RdocAll
+class SdocAll
   class Rails < Base
     def self.each
       Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|

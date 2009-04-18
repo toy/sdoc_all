@@ -1,4 +1,4 @@
-class RdocAll
+class SdocAll
   class Ruby < Base
     def self.tars
       Dir['ruby-*.tar.bz2']

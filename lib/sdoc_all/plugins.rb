@@ -1,4 +1,4 @@
-class RdocAll
+class SdocAll
   class Plugins < Base
     def self.each(&block)
       Dir[File.expand_path('~/.plugins/*')].each(&block)

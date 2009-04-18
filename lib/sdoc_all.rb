@@ -36,7 +36,7 @@ PUBLIC_PATH = BASE_PATH / 'public'
 DOCS_PATH = BASE_PATH / 'docs'
 SOURSES_PATH = BASE_PATH / 'sources'
 
-class RdocAll
+class SdocAll
   def self.update_sources(options = {})
     Base.update_all_sources(options)
   end
@@ -166,11 +166,11 @@ class RdocAll
   end
 end
 
-require 'rdoc_all/base'
-require 'rdoc_all/ruby'
-require 'rdoc_all/gems'
-require 'rdoc_all/rails'
-require 'rdoc_all/plugins'
+require 'sdoc_all/base'
+require 'sdoc_all/ruby'
+require 'sdoc_all/gems'
+require 'sdoc_all/rails'
+require 'sdoc_all/plugins'
 
-RdocAll.update_sources
-RdocAll.build_documentation
+SdocAll.update_sources
+SdocAll.build_documentation

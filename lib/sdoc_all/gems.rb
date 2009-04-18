@@ -1,4 +1,4 @@
-class RdocAll
+class SdocAll
   class Gems < Base
     def self.each(&block)
       Gem.source_index.each(&block)
