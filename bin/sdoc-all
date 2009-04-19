@@ -1,0 +1,16 @@
+#!/usr/bin/env ruby -KU
+
+require 'rubygems'
+require 'rubigen'
+
+if %w(-v --version).include? ARGV.first
+  version = YAML.load_file(File.join(File.dirname(__FILE__), '../VERSION.yml'))
+  puts "#{File.basename($0)} #{version[:major]}.#{version[:minor]}.#{version[:patch]}"
+  exit(0)
+end
+
+require 'rubigen/scripts/generate'
+source = RubiGen::PathSource.new(:application, File.join(File.dirname(__FILE__), "../lib/sdoc_all/generator"))
+RubiGen::Base.reset_sources
+RubiGen::Base.append_sources source
+RubiGen::Scripts::Generate.new.run(ARGV, :generator => 'sdoc_all')

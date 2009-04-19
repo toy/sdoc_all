@@ -12,19 +12,12 @@ __DIR__ = File.dirname(__FILE__)
 $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
 
 class SdocAll
-  def self.update_sources(options = {})
+  def self.run(options = {})
     add_default_options!(options)
 
     Base.update_all_sources(options)
-  end
-
-  def self.build_documentation(options = {})
-    add_default_options!(options)
 
     tasks = Base.rdoc_tasks(options)
-
-    options[:ruby] ||= '1.8.6'
-    options[:exclude] ||= %w(gems/actionmailer gems/actionpack gems/activerecord gems/activeresource gems/activesupport gems/rails)
 
     selected_tasks = []
     selected_tasks << tasks.find_or_last_ruby(options[:ruby])
@@ -36,8 +29,10 @@ class SdocAll
       selected_tasks << task
     end
 
-    selected_tasks.delete_if do |task|
-      options[:exclude].any?{ |exclude| task.doc_path[exclude] }
+    if options[:exclude].is_a?(Array)
+      selected_tasks.delete_if do |task|
+        options[:exclude].any?{ |exclude| task.doc_path[exclude] }
+      end
     end
 
     selected_tasks.each_with_progress('Building documentation') do |task|
@@ -67,7 +62,6 @@ class SdocAll
       system(*cmd + pathes)
 
       File.symlink(options[:docs_path], options[:public_path] + 'docs')
-      File.symlink(options[:base_path] + 'favicon.ico', options[:public_path] + 'favicon.ico') if File.exists?(options[:base_path] + 'favicon.ico')
     end
   end
 
@@ -78,6 +72,9 @@ private
     options[:public_path] = Pathname.new(options[:public_path] || options[:base_path] + 'public').freeze
     options[:docs_path] = Pathname.new(options[:docs_path] || options[:base_path] + 'docs').freeze
     options[:sources_path] = Pathname.new(options[:sources_path] || options[:base_path] + 'sources').freeze
+
+    options[:exclude] ||= %w(gems/actionmailer gems/actionpack gems/activerecord gems/activeresource gems/activesupport gems/rails)
+    options[:plugins_path] = Pathname.new(options[:plugins_path] || File.expand_path('~/.plugins')).freeze
   end
 end
 

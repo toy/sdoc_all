@@ -1,0 +1,4 @@
+require 'rubygems'
+require 'sdoc'
+
+require 'tasks/sdoc_all'

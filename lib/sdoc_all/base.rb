@@ -5,7 +5,7 @@ class SdocAll
     end
 
     def self.update_all_sources(options = {})
-      FileUtils.mkdir_p(options[:sources_path]) unless File.directory?(options[:sources_path])
+      options[:sources_path].mkpath
       Dir.chdir(options[:sources_path]) do
         @subclasses.each do |subclass|
           subclass.update_sources(options)
@@ -18,7 +18,7 @@ class SdocAll
         @@tasks = RdocTasks.new
 
         @subclasses.each do |subclass|
-          subclass.add_rdoc_tasks
+          subclass.add_rdoc_tasks(options)
         end
 
         to_clear = Dir.glob(options[:docs_path] + '*/*')

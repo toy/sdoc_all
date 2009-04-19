@@ -3,6 +3,8 @@ task :default => :update
 desc "Update documentation"
 task :update do
   require 'sdoc_all'
-  SdocAll.update_sources
-  SdocAll.build_documentation
+
+  options = YAML.load_file('sdoc.config.yml').symbolize_keys rescue {}
+
+  SdocAll.run(options)
 end

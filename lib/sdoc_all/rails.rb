@@ -22,7 +22,7 @@ class SdocAll
       end
     end
 
-    def self.add_rdoc_tasks
+    def self.add_rdoc_tasks(options = {})
       each do |rails, version|
         if File.directory?(rails)
           Dir.chdir(rails) do

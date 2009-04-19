@@ -1,19 +1,19 @@
 class SdocAll
   class Plugins < Base
-    def self.each(&block)
-      Dir[File.expand_path('~/.plugins/*')].each(&block)
+    def self.each(plugins_path, &block)
+      Dir[plugins_path + '*'].each(&block)
     end
 
     def self.update_sources(options = {})
-      each do |plugin|
+      each(options[:plugins_path]) do |plugin|
         Dir.chdir(plugin) do
           system('git fetch origin && git reset --hard HEAD')
         end
       end
     end
 
-    def self.add_rdoc_tasks
-      each do |plugin|
+    def self.add_rdoc_tasks(options = {})
+      each(options[:plugins_path]) do |plugin|
         Dir.chdir(plugin) do
           pathes = Rake::FileList.new
           pathes.include('lib/**/*.rb')

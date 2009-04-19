@@ -9,7 +9,7 @@ class SdocAll
     def self.update_sources(options = {})
     end
 
-    def self.add_rdoc_tasks
+    def self.add_rdoc_tasks(options = {})
       each do |gem_name, spec|
         main = nil
         spec.rdoc_options.each_cons(2) do |options|
