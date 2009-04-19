@@ -39,8 +39,7 @@ Example:
 <tt>sdoc-merge --title "Ruby v1.9, Rails v2.3.2.1" --op merged --names "Ruby,Rails" ruby-v1.9 rails-v2.3.2.1</tt>
 
 == sdoc-all
-sdoc-all generates folder with config and rakefile
-running <tt>rake</tt> (or <tt>rake update</tt>) in that folder:
+sdoc-all generates folder with config and rakefile, running <tt>rake</tt> (or <tt>rake update</tt>) in that folder:
 - downloads ruby sources from ftp.ruby-lang.org
 - builds dummy rails applications and freezes gems there
 - builds documentation for ruby, rails, gems and plugins
