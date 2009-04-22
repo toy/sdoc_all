@@ -1,45 +1,21 @@
-= SDoc
-== What's in?
-- shtml - RDoc's generator to build searchable documentation
-- <tt>sdoc-merge</tt> - comand line tool to build merge multiple sdoc documentations
-  packages into a single one
-- <tt>sdoc</tt> - command line tool to run rdoc with generator=shtml
-- <tt>sdoc-all</tt> - command line tool to get documentation for ruby, rails, gems and plugins in one place
+= sdoc-all
+Command line tool to get documentation for ruby, rails, gems and plugins in one place
 
 == Getting Started
-    gem sources -a http://gems.github.com
-    sudo gem install voloko-sdoc
-    sdoc -N projectdir
+  sudo gem install sdoc sdoc_all
+  sdoc-all <place for your documentation>; cd <place for your documentation>
+  rake update
 
-== Command line sdoc
-sdoc is simply a wrapper to rdoc command line tool. see <tt>sdoc --help </tt>
-for more details. <tt>--fmt</tt> is set to shtml by default. 
-Default template <tt>-T</tt> is shtml. You can also use 'direct' template.
-Example:
-<tt>sdoc -o doc/rails -T direct rails</tt>
+== Configure
+in <tt>sdoc.config.yml</tt> you can define:
+- preferred version of ruby
+- preferred version of rails
+- plugins directory
+- what to exclude
 
-== Rake
-    # Rakefile
-    require 'sdoc' # and use your RDoc task the same way you used it before
-
-    Rake::RDocTask.new do |rdoc|
-      rdoc.rdoc_dir = 'doc/rdoc'
-      rdoc.options << '--fmt' << 'shtml' # explictly set shtml generator
-      rdoc.template = 'direct' # lighter template used on railsapi.com
-      ...
-    end
-
-== sdoc-merge
-    Usage: sdoc-merge [options] directories
-        -n, --names [NAMES]              Names of merged repositories. Comma separated
-        -o, --op [DIRECTORY]             Set the output directory
-        -t, --title [TITLE]              Set the title of merged file
-
-Example:
-<tt>sdoc-merge --title "Ruby v1.9, Rails v2.3.2.1" --op merged --names "Ruby,Rails" ruby-v1.9 rails-v2.3.2.1</tt>
-
-== sdoc-all
-sdoc-all generates folder with config and rakefile, running <tt>rake</tt> (or <tt>rake update</tt>) in that folder:
+== How it works
+sdoc-all generates folder with config and rakefile
+running <tt>rake update</tt> (or simply <tt>rake</tt> as it is default task) in that folder:
 - downloads ruby sources from ftp.ruby-lang.org
 - builds dummy rails applications and freezes gems there
 - builds documentation for ruby, rails, gems and plugins

@@ -1,0 +1,17 @@
+bin/sdoc-all
+lib/sdoc_all/base.rb
+lib/sdoc_all/gems.rb
+lib/sdoc_all/generator/sdoc_all/sdoc_all_generator.rb
+lib/sdoc_all/generator/sdoc_all/templates/Rakefile
+lib/sdoc_all/generator/sdoc_all/templates/sdoc.config.yml.erb
+lib/sdoc_all/plugins.rb
+lib/sdoc_all/rails.rb
+lib/sdoc_all/rdoc_task.rb
+lib/sdoc_all/rdoc_tasks.rb
+lib/sdoc_all/ruby.rb
+lib/sdoc_all.rb
+lib/tasks/sdoc_all.rb
+Manifest
+Rakefile
+README.rdoc
+VERSION.yml
