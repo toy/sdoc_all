@@ -5,7 +5,7 @@ require 'rubigen'
 
 if %w(-v --version).include? ARGV.first
   version = YAML.load_file(File.join(File.dirname(__FILE__), '../VERSION.yml'))
-  puts "#{File.basename($0)} #{version[:major]}.#{version[:minor]}.#{version[:patch]}"
+  puts "#{File.basename($0)} #{version.join('.')}"
   exit(0)
 end
 
