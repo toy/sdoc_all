@@ -1,4 +1,6 @@
 require 'rubygems'
+require 'rake'
 require 'sdoc'
+require 'sdoc_all'
 
-require 'tasks/sdoc_all'
+require 'tasks/sdoc_all_rake'

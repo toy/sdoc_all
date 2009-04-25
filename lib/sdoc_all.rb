@@ -11,77 +11,173 @@ require 'progress'
 __DIR__ = File.dirname(__FILE__)
 $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
 
-class SdocAll
-  def self.run(options = {})
-    add_default_options!(options)
-
-    Base.update_all_sources(options)
-
-    tasks = Base.rdoc_tasks(options)
-
-    selected_tasks = []
-    selected_tasks << tasks.find_or_last_ruby(options[:ruby])
-    selected_tasks << tasks.find_or_last_rails(options[:rails])
-    tasks.gems.group_by{ |task| task.name_parts[0] }.sort_by{ |name, versions| name.downcase }.each do |name, versions|
-      selected_tasks << versions.sort_by{ |version| version.name_parts[1] }.last
-    end
-    tasks.plugins.sort_by{ |task| task.name_parts[0] }.each do |task|
-      selected_tasks << task
-    end
-
-    if options[:exclude].is_a?(Array)
-      selected_tasks.delete_if do |task|
-        options[:exclude].any?{ |exclude| task.doc_path[exclude] }
-      end
-    end
-
-    selected_tasks.each_with_progress('Building documentation') do |task|
-      task.run(options)
-    end
-
-    Dir.chdir(options[:docs_path]) do
-      Base.remove_if_present(options[:public_path])
-
-      pathes = []
-      titles = []
-      urls = []
-      selected_tasks.each do |rdoc_task|
-        doc_path = options[:docs_path] + rdoc_task.doc_path
-        if File.file?(doc_path + 'index.html')
-          pathes << rdoc_task.doc_path
-          titles << rdoc_task.title
-          urls << "/docs/#{rdoc_task.doc_path}"
-        end
-      end
-
-      cmd = %w(sdoc-merge)
-      cmd << '-o' << options[:public_path]
-      cmd << '-t' << 'all'
-      cmd << '-n' << titles.join(',')
-      cmd << '-u' << urls.join(' ')
-      system(*cmd + pathes)
-
-      File.symlink(options[:docs_path], options[:public_path] + 'docs')
-    end
-  end
-
-private
-
-  def self.add_default_options!(options)
-    options[:base_path] = Pathname.new(options[:base_path] || Dir.pwd).freeze
-    options[:public_path] = Pathname.new(options[:public_path] || options[:base_path] + 'public').freeze
-    options[:docs_path] = Pathname.new(options[:docs_path] || options[:base_path] + 'docs').freeze
-    options[:sources_path] = Pathname.new(options[:sources_path] || options[:base_path] + 'sources').freeze
-
-    options[:exclude] ||= %w(gems/actionmailer gems/actionpack gems/activerecord gems/activeresource gems/activesupport gems/rails)
-    options[:plugins_path] = Pathname.new(options[:plugins_path] || File.expand_path('~/.plugins')).freeze
+class Array
+  def sort_by!(&block)
+    replace(sort_by(&block))
   end
 end
 
-require 'sdoc_all/base'
-require 'sdoc_all/ruby'
-require 'sdoc_all/gems'
-require 'sdoc_all/rails'
-require 'sdoc_all/plugins'
-require 'sdoc_all/rdoc_task'
-require 'sdoc_all/rdoc_tasks'
+class SdocAll
+  module ClassMethods
+    def update?
+      @update.nil? || @update
+    end
+
+    def last_build_sdoc_version_path
+      Base.base_path + 'sdoc.version'
+    end
+
+    def last_build_sdoc_version
+      last_build_sdoc_version_path.read rescue nil
+    end
+
+    def current_sdoc_version
+      Gem.searcher.find('sdoc').version.to_s
+    end
+
+    def store_current_sdoc_version
+      last_build_sdoc_version_path.open('w') do |f|
+        f.write(current_sdoc_version)
+      end
+    end
+
+    def run(options = {})
+      begin
+        read_config
+        tasks = Base.tasks(:update => update? || options[:update])
+
+        if last_build_sdoc_version.nil? || last_build_sdoc_version != current_sdoc_version
+          Base.remove_if_present(Base.docs_path)
+        else
+          Dir.chdir(Base.docs_path) do
+            to_delete = Dir.glob('*')
+            tasks.each do |task|
+              to_delete.delete(task.doc_path)
+            end
+            to_delete.each do |path|
+              Base.remove_if_present(path)
+            end
+          end
+
+          tasks.each do |task|
+            doc_path = Base.docs_path + task.doc_path
+            src_path = task.src_path
+            if doc_path.exist?
+              latest = [src_path.mtime, src_path.ctime].max
+
+              created = Time.parse(File.read(doc_path + 'created.rid')) rescue nil
+              if created && latest < created
+                src_path.find do |path|
+                  Find.prune if path.directory? && path.basename.to_s[0] == ?.
+                  latest = [latest, src_path.mtime, src_path.ctime].max
+                  break unless latest < created
+                end
+              end
+              if created.nil? || latest >= created
+                Base.remove_if_present(doc_path)
+              end
+            end
+          end
+        end
+
+        merge = false
+        tasks.each_with_progress('docs') do |task|
+          unless (Base.docs_path + task.doc_path).directory?
+            puts
+            merge = true
+            task.run(options)
+          end
+        end
+
+        if merge || !Base.public_path.exist?
+          Dir.chdir(Base.docs_path) do
+            paths = []
+            titles = []
+            urls = []
+            tasks.each do |task|
+              doc_path = Base.docs_path + task.doc_path
+              if File.file?(doc_path + 'index.html')
+                paths << task.doc_path
+                titles << task.title
+                urls << "/docs/#{task.doc_path}"
+              end
+            end
+
+            if paths.present?
+              Base.remove_if_present(Base.public_path)
+
+              cmd = %w(sdoc-merge)
+              cmd << '-o' << Base.public_path
+              cmd << '-t' << 'all'
+              cmd << '-n' << titles.join(',')
+              cmd << '-u' << urls.join(' ')
+              Base.system(*cmd + paths)
+
+              File.symlink(Base.docs_path, Base.public_path + 'docs')
+            end
+          end
+        end
+        store_current_sdoc_version
+      rescue ConfigError => e
+        STDERR.puts e.to_s
+      end
+    end
+
+    def read_config
+      Base.clear
+      config = YAML.load_file('config.yml').symbolize_keys rescue {}
+
+      min_update_interval = if config[:min_update_interval].to_s[/(\d+)\s*(.*)/]
+        value = $1.to_i
+        case $2
+        when /^d/
+          value.days
+        when /^h/
+          value.hours
+        when /^m/
+          value.minutes
+        else
+          value.seconds
+        end
+      else
+        1.hour
+      end
+
+      created = last_build_sdoc_version_path.mtime rescue nil
+      @update = created.nil? || created < min_update_interval.ago
+
+      if config[:sdoc] && config[:sdoc].is_a?(Array) && config[:sdoc].length > 0
+        errors = []
+        config[:sdoc].each do |entry|
+          begin
+            if entry.is_a?(Hash)
+              if entry.length == 1
+                Base.to_document(*entry.shift)
+              else
+                raise ConfigError.new("config entry #{entry.inspect} can not be understood - watch ident")
+              end
+            else
+              Base.to_document(entry, {})
+            end
+          rescue ConfigError => e
+            errors << e
+          end
+        end
+        if errors.present?
+          raise ConfigError.new(errors)
+        end
+      else
+        raise ConfigError.new("config did not specify what to document")
+      end
+    end
+  end
+  extend ClassMethods
+end
+
+require 'sdoc_all/base.rb'
+require 'sdoc_all/task.rb'
+require 'sdoc_all/config_error.rb'
+
+Dir.entries("#{__DIR__}/sdoc_all").grep(/\.rb$/).each do |file|
+  require "sdoc_all/#{file}"
+end

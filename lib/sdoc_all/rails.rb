@@ -1,51 +1,69 @@
 class SdocAll
   class Rails < Base
-    def self.each
-      Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
-        yield spec.full_name, spec.version.to_s
-      end
-    end
+    def initialize(config)
+      config ||= {}
+      config = {:version => config} unless config.is_a?(Hash)
 
-    def self.update_sources(options = {})
-      to_clear = Dir['rails-*']
-      each do |rails, version|
-        to_clear.delete(rails)
-        remove_if_present(rails) if options[:force]
-        unless File.directory?(rails)
-          with_env 'VERSION', version do
-            system('rails', rails, '--freeze')
-          end
+      if config[:version]
+        unless self.class.versions.include?(config[:version])
+          raise ConfigError.new("you don't have rails #{config[:version]} installed")
+        end
+      else
+        if self.class.versions.empty?
+          raise ConfigError.new("you don't have any rails versions installed")
         end
       end
-      to_clear.each do |rails|
-        remove_if_present(rails)
-      end
+
+      @config = {
+        :version => config.delete(:version) || self.class.versions.last,
+      }
+
+      raise_unknown_options_if_not_blank!(config)
     end
 
-    def self.add_rdoc_tasks(options = {})
-      each do |rails, version|
-        if File.directory?(rails)
-          Dir.chdir(rails) do
-            pathes = Rake::FileList.new
-            File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
-              true until f.readline['Rake::RDocTask.new("rails")']
-              until (line = f.readline.strip) == '}'
-                if line['rdoc.rdoc_files.include']
-                  pathes.include(line[/'(.*)'/, 1])
-                elsif line['rdoc.rdoc_files.exclude']
-                  pathes.exclude(line[/'(.*)'/, 1])
-                end
-              end
+    def add_tasks(options = {})
+      version = @config[:version]
+      path = sources_path + version
+
+      unless path.directory?
+        Base.remove_if_present(sources_path)
+        sources_path
+        Base.with_env 'VERSION', version do
+          Base.system('rails', path, '--freeze')
+        end
+      end
+
+      paths = Rake::FileList.new
+      Dir.chdir(path) do
+        File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
+          true until f.readline['Rake::RDocTask.new("rails")']
+          until (line = f.readline.strip) == '}'
+            if line['rdoc.rdoc_files.include']
+              paths.include(line[/'(.*)'/, 1])
+            elsif line['rdoc.rdoc_files.exclude']
+              paths.exclude(line[/'(.*)'/, 1])
             end
-            add_rdoc_task(
-              :name_parts => [version],
-              :src_path => rails,
-              :doc_path => rails,
-              :pathes => pathes.resolve
-            )
           end
         end
+        paths.resolve
+      end
+      Base.add_task(
+        :src_path => path,
+        :doc_path => "rails-#{version}",
+        :paths => paths.to_a,
+        :title => "rails-#{version}"
+      )
+    end
+
+    module ClassMethods
+      def versions
+        [].tap do |versions|
+          Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
+            versions << spec.version
+          end
+        end.sort.map(&:to_s)
       end
     end
+    extend ClassMethods
   end
 end

@@ -1,0 +1,8 @@
+=begin
+Autotest.add_hook :reset do |at|
+  at.clear_mappings
+  at.add_mapping(/\.rb$/) do |filename, _|
+    Dir.glob('spec/**/*_spec.rb')
+  end
+end
+=end

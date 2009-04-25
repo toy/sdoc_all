@@ -10,7 +10,11 @@ version = YAML.load_file(File.join(File.dirname(__FILE__), 'VERSION.yml')).join(
 Echoe.new('sdoc_all', version) do |p|
   p.author = "toy"
   p.summary = "Command line tool to get documentation for ruby, rails, gems and plugins in one place"
+  p.email = "ivan@workisfun.ru"
   p.url = "http://github.com/toy/sdoc_all"
-  p.runtime_dependencies = %w(sdoc activesupport rake progress)
+  p.runtime_dependencies << 'activesupport'
+  p.runtime_dependencies << 'rake'
+  p.runtime_dependencies << 'progress >= 0.0.8'
+  # TODO: sdoc or voloko-sdoc
   p.project = 'toytoy'
 end

@@ -16,7 +16,7 @@ class SdocAllGenerator < RubiGen::Base
       BASEDIRS.each { |path| m.directory path }
 
       m.file_copy_each %w(Rakefile)
-      m.file_copy_each %w(sdoc.config.yml)
+      m.file_copy_each %w(config.yml)
     end
   end
 
