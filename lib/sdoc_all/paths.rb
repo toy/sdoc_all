@@ -45,7 +45,7 @@ class SdocAll
 
         task_options = {
           :src_path => path,
-          :doc_path => "paths.#{path.relative_path_from(common_path)}",
+          :doc_path => "paths.#{path.relative_path_from(common_path).to_s.gsub('/', '.')}",
         }
         task_options[:title] = task_options[:doc_path].sub('.', ': ')
         task_options[:main] = entry[:main] if entry[:main]

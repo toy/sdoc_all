@@ -1,6 +1,6 @@
 ---
 min_update_interval: 1 hour
-sdoc: # watch ident in this section - it must be 4 spaces
+sdoc: # watch indent in this section - it must be 4 spaces
 - ruby: 1.8.7
 - rails
 - gems:
