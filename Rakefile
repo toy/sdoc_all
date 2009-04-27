@@ -9,7 +9,8 @@ version = YAML.load_file(File.join(File.dirname(__FILE__), 'VERSION.yml')).join(
 
 Echoe.new('sdoc_all', version) do |p|
   p.author = "toy"
-  p.summary = "Command line tool to get documentation for ruby, rails, gems and plugins in one place"
+  p.summary = "documentation for everything"
+  p.description = "Command line tool to get documentation for ruby, rails, gems and plugins in one place"
   p.email = "ivan@workisfun.ru"
   p.url = "http://github.com/toy/sdoc_all"
   p.runtime_dependencies << 'activesupport'

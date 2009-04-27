@@ -1,5 +1,5 @@
 = sdoc-all
-Command line tool to get documentation for ruby, rails, gems and plugins in one place
+Command line tool to get documentation for ruby, rails, gems, plugins and other ruby code in one place
 
 == Getting Started
   sudo gem install voloko-sdoc sdoc_all
@@ -36,6 +36,7 @@ list of things you want to document
 carefully watch indent - 4 spaces for options
   sdoc:
 
+=== ruby
 ruby 1.8.6 source will be downloaded for you from ftp.ruby-lang.org and placed in folder sources
   - ruby: 1.8.6
 
@@ -44,12 +45,14 @@ if you don't want updates use this
       version: 1.8.6
       update: false
 
+=== rails
 choose rails version
   - rails: 2.3.2
 
 latest installed version will be used
   - rails
 
+=== gems
 document all gems
   - gems
 
@@ -75,6 +78,7 @@ document all gems except mysql and gems related to rails
       - activeresource
       - activesupport
 
+=== plugins
 document plugins in folder ~/.plugins (they will also be updated if they are under git)
   - plugins: ~/.plugins
 
@@ -101,6 +105,7 @@ document all plugins except acts_as_fu and acts_as_bar
       path: ~/.plugins
       exclude: [acts_as_fu, acts_as_bar]
 
+=== paths
 document file or directory (you can create .document file in directory to tell rdoc what to document)
   - path: ~/lib/bin
 
