@@ -44,6 +44,22 @@ class SdocAll
           paths.include('lib/**/*.rb')
           paths.include('README*')
           paths.include('CHANGELOG*')
+
+          begin
+            File.open('Rakefile') do |f|
+              true until f.readline['Rake::RDocTask']
+              until ['end', '}'].include?(line = f.readline.strip)
+                globs = line.scan(/'([^']*)'/).map{ |match| match[0] }
+                if line['include(']
+                  paths.include(*globs)
+                elsif line['exclude(']
+                  paths.exclude(*globs)
+                end
+              end
+            end
+          rescue
+          end
+
           paths.resolve
         end
         Base.add_task(
