@@ -2,6 +2,7 @@
 
 require 'fileutils'
 require 'find'
+require 'digest'
 
 require 'rubygems'
 require 'activesupport'
@@ -35,10 +36,8 @@ class SdocAll
       Gem.searcher.find('sdoc').version.to_s
     end
 
-    def store_current_sdoc_version
-      last_build_sdoc_version_path.open('w') do |f|
-        f.write(current_sdoc_version)
-      end
+    def config_hash_path
+      Base.public_path + 'config.hash'
     end
 
     def run(options = {})
@@ -58,38 +57,16 @@ class SdocAll
               Base.remove_if_present(path)
             end
           end
-
-          tasks.each do |task|
-            doc_path = Base.docs_path + task.doc_path
-            src_path = task.src_path
-            if doc_path.exist?
-              latest = [src_path.mtime, src_path.ctime].max
-
-              created = Time.parse(File.read(doc_path + 'created.rid')) rescue nil
-              if created && latest < created
-                src_path.find do |path|
-                  Find.prune if path.directory? && path.basename.to_s[0] == ?.
-                  latest = [latest, src_path.mtime, src_path.ctime].max
-                  break unless latest < created
-                end
-              end
-              if created.nil? || latest >= created
-                Base.remove_if_present(doc_path)
-              end
-            end
-          end
         end
 
-        merge = false
         tasks.each_with_progress('docs') do |task|
-          unless (Base.docs_path + task.doc_path).directory?
-            puts
-            merge = true
-            task.run(options)
-          end
+          task.run(options)
         end
 
-        if merge || !Base.public_path.exist?
+        hash = Digest::SHA1.hexdigest(tasks.map(&:hash).inspect)
+        created_hash = config_hash_path.read rescue nil
+
+        if hash != created_hash
           Dir.chdir(Base.docs_path) do
             paths = []
             titles = []
@@ -113,11 +90,18 @@ class SdocAll
               cmd << '-u' << urls.join(' ')
               Base.system(*cmd + paths)
 
-              File.symlink(Base.docs_path, Base.public_path + 'docs')
+              if Base.public_path.directory?
+                File.symlink(Base.docs_path, Base.public_path + 'docs')
+                config_hash_path.open('w') do |f|
+                  f.write(hash)
+                end
+                last_build_sdoc_version_path.open('w') do |f|
+                  f.write(current_sdoc_version)
+                end
+              end
             end
           end
         end
-        store_current_sdoc_version
       rescue ConfigError => e
         STDERR.puts e.to_s
       end
