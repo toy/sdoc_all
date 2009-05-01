@@ -190,7 +190,7 @@ class SdocAll
         @path.stub!(:directory?).and_return(true)
         Base.should_not_receive(:remove_if_present)
         Base.should_not_receive(:system)
-        Base.should_receive(:add_task).with(:doc_path => "ruby-1.2.3-p666", :src_path => @path)
+        Base.should_receive(:add_task).with(:doc_path => "ruby-1.2.3-p666", :src_path => @path, :title => 'ruby-1.2.3-p666')
 
         Ruby.new(:version => '1.2.3').add_tasks(:update => true)
       end

@@ -12,7 +12,7 @@ class SdocAll
       [:a, :b, :c].each do |sym|
         @roots[sym] = mock(sym, :expand_path => mock("#{sym}_exp".to_sym, :exist? => true, :relative_path_from => "lala/#{sym}_exp"))
         Pathname.should_receive(:new).with("#{sym}").and_return(@roots[sym])
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/#{sym}_exp", :src_path => @roots[sym].expand_path)
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.#{sym}_exp", :src_path => @roots[sym].expand_path, :title => "paths: lala/#{sym}_exp")
       end
       Paths.should_receive(:common_path).with([@roots[:a], @roots[:b], @roots[:c]].map(&:expand_path)).and_return('/common')
 
@@ -26,7 +26,7 @@ class SdocAll
       [:a, :b, :d, :e].each do |sym|
         @roots[sym] = mock(sym, :expand_path => mock("#{sym}_exp".to_sym, :exist? => true, :relative_path_from => "lala/#{sym}_exp"))
         Pathname.should_receive(:new).with("#{sym}").and_return(@roots[sym])
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/#{sym}_exp", :src_path => @roots[sym].expand_path)
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.#{sym}_exp", :src_path => @roots[sym].expand_path, :title => "paths: lala/#{sym}_exp")
       end
       Paths.should_receive(:common_path).with([@roots[:a], @roots[:b], @roots[:d], @roots[:e]].map(&:expand_path)).and_return('/common')
 
@@ -45,12 +45,12 @@ class SdocAll
       end
 
       it "should add task" do
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/root", :src_path => @root.expand_path)
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.root", :src_path => @root.expand_path, :title => 'paths: lala/root')
         Paths.new({:root => '/lalala/lala/root'}).add_tasks
       end
 
       it "should add task with main" do
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/root", :src_path => @root.expand_path, :main => 'special_readme')
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.root", :src_path => @root.expand_path, :main => 'special_readme', :title => 'paths: lala/root')
         Paths.new({:root => '/lalala/lala/root', :main => 'special_readme'}).add_tasks
       end
 
@@ -61,7 +61,7 @@ class SdocAll
         @file_list.should_receive(:include).with('*.rb')
         @file_list.should_receive(:to_a).and_return(['a.rb', 'b.rb'])
 
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/root", :src_path => @root.expand_path, :paths => ['a.rb', 'b.rb'])
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.root", :src_path => @root.expand_path, :paths => ['a.rb', 'b.rb'], :title => 'paths: lala/root')
         Paths.new({:root => '/lalala/lala/root', :paths => '*.rb'}).add_tasks
       end
 
@@ -76,7 +76,7 @@ class SdocAll
         @file_list.should_receive(:exclude).ordered.with('*.tmp')
         @file_list.should_receive(:to_a).and_return(['a.rb', 'b.rb', 'README', 'README_en'])
 
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/root", :src_path => @root.expand_path, :paths => ['a.rb', 'b.rb', 'README', 'README_en'])
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.root", :src_path => @root.expand_path, :paths => ['a.rb', 'b.rb', 'README', 'README_en'], :title => 'paths: lala/root')
         Paths.new({:root => '/lalala/lala/root', :paths => ['*.*', '-*.cgi', '+README', '+README_*', '-*.tmp']}).add_tasks
       end
     end
@@ -91,8 +91,8 @@ class SdocAll
 
         Paths.should_receive(:common_path).with([@root, @other].map(&:expand_path)).and_return('/common')
 
-        Base.should_receive(:add_task).with(:doc_path => "paths.lala/root", :src_path => @root.expand_path)
-        Base.should_receive(:add_task).with(:doc_path => "paths.lolo/other", :src_path => @other.expand_path)
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.root", :src_path => @root.expand_path, :title => 'paths: lala/root')
+        Base.should_receive(:add_task).with(:doc_path => "paths.lolo.other", :src_path => @other.expand_path, :title => 'paths: lolo/other')
 
         Paths.new([{:root => '/lalala/lala/root'}, {:root => '/lalala/lolo/other'}]).add_tasks
       end
