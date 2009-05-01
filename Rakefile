@@ -15,7 +15,7 @@ Echoe.new('sdoc_all', version) do |p|
   p.url = "http://github.com/toy/sdoc_all"
   p.runtime_dependencies << 'activesupport'
   p.runtime_dependencies << 'rake'
-  p.runtime_dependencies << 'progress >= 0.0.8'
+  p.runtime_dependencies << 'progress >=0.0.8'
   # TODO: sdoc or voloko-sdoc
   p.project = 'toytoy'
 end
