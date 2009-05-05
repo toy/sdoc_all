@@ -41,7 +41,7 @@ class SdocAll
 
       it "should create rails app" do
         FileTest.should_receive(:directory?).with("sources/rails/1.3.5").and_return(false)
-        Base.should_receive(:remove_if_present).with(Pathname.new("sources/rails"))
+        Base.should_receive(:remove_if_present).with(Pathname.new("sources/rails/1.3.5"))
         Base.should_receive(:system).with("rails", Pathname.new("sources/rails/1.3.5"), "--freeze")
         Rails.new('1.3.5').add_tasks
       end

@@ -26,7 +26,7 @@ class SdocAll
       path = sources_path + version
 
       unless path.directory?
-        Base.remove_if_present(sources_path)
+        Base.remove_if_present(path)
         sources_path
         Base.with_env 'VERSION', version do
           Base.system('rails', path, '--freeze')
