@@ -177,7 +177,7 @@ class SdocAll
 
       it "should extract archive if matching directory does not exist" do
         @path.stub!(:directory?).and_return(false)
-        Base.should_receive(:remove_if_present).with(@sources_path)
+        Base.should_receive(:remove_if_present).with(@path)
         Base.should_receive(:system).with("tar", "-xjf", "sources/ruby-1.2.3-p666.tar.bz2", "-C", @sources_path)
         @path2 = mock(:path2)
         @sources_path.should_receive(:+).with('ruby-1.2.3-p666').and_return(@path2)

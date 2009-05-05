@@ -24,9 +24,9 @@ class SdocAll
       archive = self.class.find_or_download_matching_archive(config[:version], :update => config[:update] && options[:update])
       version = archive.full_version
       path = sources_path + version
-
+      
       unless path.directory?
-        Base.remove_if_present(sources_path)
+        Base.remove_if_present(path)
         case archive.extension
         when 'tar.bz2'
           Base.system('tar', '-xjf', archive.path, '-C', sources_path)
