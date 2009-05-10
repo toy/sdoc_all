@@ -59,6 +59,10 @@ class SdocAll
         end
       end
 
+      def used_sources
+        @used_sources ||= []
+      end
+
       def inherited(subclass)
         subclasses[subclass.short_name] = subclass
       end
@@ -86,6 +90,18 @@ class SdocAll
         @@tasks = []
         entries.each do |entry|
           entry.add_tasks(options)
+        end
+        subclasses.values.each do |subclass|
+          unless subclass.used_sources.empty?
+            paths = Rake::FileList.new
+            paths.include(subclass.sources_path + '*')
+            subclass.used_sources.each do |path|
+              paths.exclude(path)
+            end
+            paths.resolve.each do |path|
+              remove_if_present(path)
+            end
+          end
         end
         @@tasks
       end

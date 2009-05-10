@@ -32,6 +32,7 @@ class SdocAll
           Base.system('rails', path, '--freeze')
         end
       end
+      self.class.used_sources << path
 
       paths = Rake::FileList.new
       Dir.chdir(path) do

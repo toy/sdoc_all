@@ -37,6 +37,7 @@ class SdocAll
         end
         File.rename(sources_path + "ruby-#{version}", path)
       end
+      self.class.used_sources << path
 
       Base.add_task(
         :src_path => path,
