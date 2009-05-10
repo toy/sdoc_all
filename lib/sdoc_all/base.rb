@@ -60,10 +60,7 @@ class SdocAll
       end
 
       def inherited(subclass)
-        name = subclass.short_name
-        [name, name.singularize, name.pluralize].uniq.each do |name_form|
-          subclasses[name_form] = subclass
-        end
+        subclasses[subclass.short_name] = subclass
       end
 
       def entries
@@ -77,8 +74,9 @@ class SdocAll
       def to_document(type, config)
         type = type.to_s
         config.symbolize_keys! if config.is_a?(Hash)
-        if subclasses[type]
-          entries << subclasses[type].new(config)
+        subclass = subclasses[type] || subclasses[type.singularize] || subclasses[type.pluralize]
+        if subclass
+          entries << subclass.new(config)
         else
           raise ConfigError.new("don't know how to build \"#{type}\" => #{config.inspect}")
         end
