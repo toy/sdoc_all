@@ -65,7 +65,7 @@ class SdocAll
       if created && latest < created
         src_path.find do |path|
           Find.prune if path.directory? && path.basename.to_s[0] == ?.
-          latest = [latest, src_path.mtime, src_path.ctime].max
+          latest = [latest, path.mtime, path.ctime].max
           break unless latest < created
         end
       end
