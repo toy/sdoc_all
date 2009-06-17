@@ -56,7 +56,7 @@ class SdocAll
 
       it "should add task with with one include" do
         @file_list = mock(:file_list, :resolve => true)
-        Rake::FileList.stub!(:new).and_return(@file_list)
+        FileList.stub!(:new).and_return(@file_list)
         Dir.should_receive(:chdir).with(@root.expand_path).and_yield
         @file_list.should_receive(:include).with('*.rb')
         @file_list.should_receive(:to_a).and_return(['a.rb', 'b.rb'])
@@ -67,7 +67,7 @@ class SdocAll
 
       it "should add task with with array of includes and excludes" do
         @file_list = mock(:file_list, :resolve => true)
-        Rake::FileList.stub!(:new).and_return(@file_list)
+        FileList.stub!(:new).and_return(@file_list)
         Dir.should_receive(:chdir).with(@root.expand_path).and_yield
         @file_list.should_receive(:include).ordered.with('*.*')
         @file_list.should_receive(:exclude).ordered.with('*.cgi')

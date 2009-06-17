@@ -10,6 +10,9 @@ Spec::Runner.configure do |config|
   config.prepend_before do
     SdocAll::Base.stub!(:system)
     SdocAll::Base.stub!(:remove_if_present)
+    class <<Dir
+      alias original_chdir chdir
+    end
     Dir.stub!(:chdir).and_yield
     Net::FTP.stub!(:open)
     File.stub!(:symlink)

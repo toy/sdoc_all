@@ -93,7 +93,7 @@ class SdocAll
         end
         subclasses.values.each do |subclass|
           unless subclass.used_sources.empty?
-            paths = Rake::FileList.new
+            paths = FileList.new
             paths.include(subclass.sources_path + '*')
             subclass.used_sources.each do |path|
               paths.exclude(path)

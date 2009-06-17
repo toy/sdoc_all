@@ -34,7 +34,7 @@ class SdocAll
       end
       self.class.used_sources << path
 
-      paths = Rake::FileList.new
+      paths = FileList.new
       Dir.chdir(path) do
         File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
           true until f.readline['Rake::RDocTask.new("rails")']

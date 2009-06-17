@@ -39,7 +39,7 @@ class SdocAll
       end
 
       plugins.each do |plugin|
-        paths = Rake::FileList.new
+        paths = FileList.new
         Dir.chdir(plugin) do
           paths.include('lib/**/*.rb')
           paths.include('README*')

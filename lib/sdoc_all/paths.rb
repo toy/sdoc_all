@@ -51,7 +51,7 @@ class SdocAll
         task_options[:main] = entry[:main] if entry[:main]
 
         if entry[:paths]
-          paths = Rake::FileList.new
+          paths = FileList.new
           Dir.chdir(path) do
             entry[:paths].each do |glob|
               m = /^([+-]?)(.*)$/.match(glob)
