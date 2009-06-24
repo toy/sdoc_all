@@ -76,7 +76,7 @@ class SdocAll
               if File.file?(doc_path + 'index.html')
                 paths << task.doc_path
                 titles << task.title
-                urls << "/docs/#{task.doc_path}"
+                urls << "docs/#{task.doc_path}"
               end
             end
 
