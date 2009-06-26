@@ -48,6 +48,11 @@ if you don't want updates use this
       version: 1.8.6
       update: false
 
+also as ruby has no index page, you can create folder with index.html in it (also there can be stylesheets, images or whatever you want but they should be linked relatively; I choose http://www.zenspider.com/Languages/Ruby/QuickRef.html :) ) and put path to it in config like
+  - ruby:
+      version: 1.8.6
+      index: ruby_quick_ref
+
 === rails
 choose rails version
   - rails: 2.3.2

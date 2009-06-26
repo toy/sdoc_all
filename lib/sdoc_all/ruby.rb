@@ -9,6 +9,7 @@ class SdocAll
       @config = {
         :update => config.delete(:update) != false,
         :version => config.delete(:version),
+        :index => config.delete(:index),
       }
 
       version = @config[:version]
@@ -16,6 +17,13 @@ class SdocAll
         raise ConfigError.new("specify version of ruby (place archive to 'sources' directory or it will be download from ftp://ftp.ruby-lang.org/)")
       end
       self.class.find_or_download_matching_archive(version)
+
+      if @config[:index]
+        index = Pathname(@config[:index])
+        unless index.directory? && (index + 'index.html').file?
+          raise ConfigError.new("index should be a directory with index.html inside and all related files should be with relative links")
+        end
+      end
 
       raise_unknown_options_if_not_blank!(config)
     end
@@ -39,11 +47,13 @@ class SdocAll
       end
       self.class.used_sources << path
 
-      Base.add_task(
+      task_options = {
         :src_path => path,
         :doc_path => "ruby-#{version}",
         :title => "ruby-#{version}"
-      )
+      }
+      task_options[:index] = config[:index] if config[:index]
+      Base.add_task(task_options)
     end
 
   private

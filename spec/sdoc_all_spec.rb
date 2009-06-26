@@ -33,7 +33,7 @@ describe SdocAll do
 
       SdocAll.should_receive(:read_config)
       SdocAll::Base.should_receive(:tasks).and_return(@tasks)
-      SdocAll::Base.should_receive(:system).with('sdoc-merge', '-o', Pathname.new('/public'), '-t', 'all', '-n', '<a>,<b>,<c>', '-u', '/docs/a /docs/b /docs/c', 'a', 'b', 'c')
+      SdocAll::Base.should_receive(:system).with('sdoc-merge', '-o', Pathname.new('/public'), '-t', 'ruby related reference', '-n', '<a>,<b>,<c>', '-u', 'docs/a docs/b docs/c', 'a', 'b', 'c')
       SdocAll.run
     end
   end

@@ -2,13 +2,14 @@ require 'digest'
 
 class SdocAll
   class Task
-    attr_reader :src_path, :doc_path, :paths, :main, :title
+    attr_reader :src_path, :doc_path, :paths, :main, :title, :index
     def initialize(options = {})
       @src_path = Pathname.new(options[:src_path]).expand_path
       @doc_path = options[:doc_path]
       @paths = options[:paths]
       @main = options[:main]
       @title = options[:title]
+      @index = options[:index]
     end
 
     def run(options = {})
@@ -25,6 +26,14 @@ class SdocAll
             cmd << '-m' << main if main
             Base.system(*cmd + paths)
           end
+          if index
+            custom_index_dir_name = 'custom_index'
+            custom_index_path = Base.docs_path + doc_path + custom_index_dir_name
+            Base.remove_if_present(custom_index_path)
+            FileUtils.cp_r(index, custom_index_path)
+            index_html = Base.docs_path + doc_path + 'index.html'
+            index_html.write index_html.read.sub(/(<frame src=")[^"]+(" name="docwin" \/>)/, "\\1#{custom_index_dir_name}/index.html\\2")
+          end
         else
           Base.system(*cmd + [src_path])
         end
@@ -38,7 +47,9 @@ class SdocAll
     end
 
     def hash
-      Digest::SHA1.hexdigest([src_path.to_s, doc_path.to_s, paths, main, title, last_build_time].inspect)
+      for_hash = [src_path.to_s, doc_path.to_s, paths, main, title, last_build_time]
+      for_hash << index if index
+      Digest::SHA1.hexdigest(for_hash.inspect)
     end
 
     def config_hash_path

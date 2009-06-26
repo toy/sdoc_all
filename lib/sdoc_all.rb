@@ -34,7 +34,7 @@ class SdocAll
     end
 
     def title
-      @title
+      @title.present? ? @title : 'ruby related reference'
     end
 
     def last_build_sdoc_version_path
@@ -76,7 +76,7 @@ class SdocAll
           task.run(options)
         end
 
-        hash = Digest::SHA1.hexdigest(tasks.map(&:hash).inspect + title)
+        hash = Digest::SHA1.hexdigest(tasks.map(&:hash).inspect + title.to_s)
         created_hash = config_hash_path.read rescue nil
 
         if hash != created_hash
@@ -143,7 +143,7 @@ class SdocAll
       created = last_build_sdoc_version_path.mtime rescue nil
       @update = created.nil? || created < min_update_interval.ago
 
-      @title = config[:title].present? ? config[:title] : 'ruby related reference'
+      @title = config[:title]
 
       if config[:sdoc] && config[:sdoc].is_a?(Array) && config[:sdoc].length > 0
         errors = []
