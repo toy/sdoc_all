@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
 
+require 'pathname'
 require 'fileutils'
 require 'find'
 require 'digest'
@@ -15,6 +16,14 @@ $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(
 class Array
   def sort_by!(&block)
     replace(sort_by(&block))
+  end
+end
+
+class Pathname
+  def write(s)
+    open('w') do |f|
+      f.write(s)
+    end
   end
 end
 
