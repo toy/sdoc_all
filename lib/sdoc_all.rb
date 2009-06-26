@@ -24,6 +24,10 @@ class SdocAll
       @update.nil? || @update
     end
 
+    def title
+      @title
+    end
+
     def last_build_sdoc_version_path
       Base.base_path + 'sdoc.version'
     end
@@ -63,7 +67,7 @@ class SdocAll
           task.run(options)
         end
 
-        hash = Digest::SHA1.hexdigest(tasks.map(&:hash).inspect)
+        hash = Digest::SHA1.hexdigest(tasks.map(&:hash).inspect + title)
         created_hash = config_hash_path.read rescue nil
 
         if hash != created_hash
@@ -85,7 +89,7 @@ class SdocAll
 
               cmd = %w(sdoc-merge)
               cmd << '-o' << Base.public_path
-              cmd << '-t' << 'all'
+              cmd << '-t' << title
               cmd << '-n' << titles.join(',')
               cmd << '-u' << urls.join(' ')
               Base.system(*cmd + paths)
@@ -129,6 +133,8 @@ class SdocAll
 
       created = last_build_sdoc_version_path.mtime rescue nil
       @update = created.nil? || created < min_update_interval.ago
+
+      @title = config[:title].present? ? config[:title] : 'ruby related reference'
 
       if config[:sdoc] && config[:sdoc].is_a?(Array) && config[:sdoc].length > 0
         errors = []
