@@ -32,6 +32,9 @@ time to skip updates (for now ruby and plugins are updated)
 days, hours, minutes, seconds accepted
   min_update_interval: 1 hour
 
+title of resulting page
+  title: "full reference"
+
 list of things you want to document
 carefully watch indent - 4 spaces for options
   sdoc:
