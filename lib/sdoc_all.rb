@@ -125,17 +125,7 @@ class SdocAll
       config = YAML.load_file('config.yml').symbolize_keys rescue {}
 
       min_update_interval = if config[:min_update_interval].to_s[/(\d+)\s*(.*)/]
-        value = $1.to_i
-        case $2
-        when /^d/
-          value.days
-        when /^h/
-          value.hours
-        when /^m/
-          value.minutes
-        else
-          value.seconds
-        end
+        $1.to_i.send({'d' => :days, 'h' => :hours, 'm' => :minutes}[$2[0, 1].downcase] || :seconds)
       else
         1.hour
       end
