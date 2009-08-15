@@ -124,7 +124,6 @@ class SdocAll
     end
 
     def run(options = {})
-      p clobber?
       if clobber?
         Base.remove_if_present(Base.docs_path + doc_path)
 
