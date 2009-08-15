@@ -163,10 +163,11 @@ class SdocAll
   extend ClassMethods
 end
 
-require 'sdoc_all/base.rb'
-require 'sdoc_all/task.rb'
-require 'sdoc_all/config_error.rb'
+require 'sdoc_all/base'
+require 'sdoc_all/task'
+require 'sdoc_all/config_error'
+require 'sdoc_all/file_list'
 
-Dir.entries("#{__DIR__}/sdoc_all").grep(/\.rb$/).each do |file|
-  require "sdoc_all/#{file}"
+Dir.entries("#{__DIR__}/sdoc_all/parts").grep(/\.rb$/).each do |file|
+  require "sdoc_all/parts/#{file}"
 end
