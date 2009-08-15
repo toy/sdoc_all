@@ -10,7 +10,20 @@ class SdocAll
         :exclude => config_exclude_option(config),
       }
 
-      if specs.empty?
+      errors = []
+      gem_names = unfiltered_specs.map{ |spec| spec.name.downcase }
+      [:only, :exclude].each do |option|
+        if @config[option]
+          @config[option].each do |gem_name|
+            errors << "#{option} #{gem_name} does not match any gem" unless gem_names.include?(gem_name)
+          end
+        end
+      end
+      unless errors.empty?
+        raise ConfigError.new(errors.join("\n"))
+      end
+
+      if filtered_specs.empty?
         options = @config.map do |option, values|
           "#{option} => #{Array(values).join(',')}" if values.present?
         end.compact.join(', ')
@@ -21,6 +34,7 @@ class SdocAll
     end
 
     def add_tasks(options = {})
+      specs = filtered_specs.sort_by{ |spec| [spec.name.downcase, spec.sort_obj] }
       specs.each do |spec|
         main = nil
         spec.rdoc_options.each_cons(2) do |options|
@@ -38,10 +52,12 @@ class SdocAll
 
   private
 
-    def specs
-      specs = config[:versions] == 'all' ? self.class.all_specs : self.class.latest_specs
+    def unfiltered_specs
+      config[:versions] == 'all' ? self.class.all_specs : self.class.latest_specs
+    end
 
-      specs.sort_by!{ |spec| [spec.name.downcase, spec.sort_obj] }
+    def filtered_specs
+      specs = unfiltered_specs
 
       specs.delete_if{ |spec| !config[:only].include?(spec.name.downcase) } if config[:only]
       specs.delete_if{ |spec| config[:exclude].include?(spec.name.downcase) }
