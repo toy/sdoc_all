@@ -64,7 +64,7 @@ class SdocAll
           Dir.chdir(Base.docs_path) do
             to_delete = Dir.glob('*')
             tasks.each do |task|
-              to_delete.delete(task.doc_path)
+              to_delete -= task.occupied_doc_pathes
             end
             to_delete.each do |path|
               Base.remove_if_present(path)
@@ -76,10 +76,10 @@ class SdocAll
           task.run(options)
         end
 
-        hash = Digest::SHA1.hexdigest(tasks.map(&:hash).inspect + title.to_s)
+        config_hash = Digest::SHA1.hexdigest(tasks.map(&:config_hash).inspect + title.to_s)
         created_hash = config_hash_path.read rescue nil
 
-        if hash != created_hash
+        if config_hash != created_hash
           Dir.chdir(Base.docs_path) do
             paths = []
             titles = []
@@ -106,7 +106,7 @@ class SdocAll
               if Base.public_path.directory?
                 File.symlink(Base.docs_path, Base.public_path + 'docs')
                 config_hash_path.open('w') do |f|
-                  f.write(hash)
+                  f.write(config_hash)
                 end
                 last_build_sdoc_version_path.open('w') do |f|
                   f.write(current_sdoc_version)

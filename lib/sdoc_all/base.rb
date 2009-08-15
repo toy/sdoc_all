@@ -110,6 +110,10 @@ class SdocAll
         @@tasks << Task.new(options)
       end
 
+      def add_merge_task(options = {})
+        @@tasks << MergeTask.new(options)
+      end
+
       def system(*args)
         escaped_args = args.map(&:to_s).map{ |arg| arg[/[^a-z0-9\/\-.]/i] ? arg.inspect : arg }
         command = escaped_args.join(' ')

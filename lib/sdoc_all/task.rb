@@ -1,7 +1,33 @@
 require 'digest'
 
 class SdocAll
-  class Task
+  class BaseTask
+    def config_hash
+      Digest::SHA1.hexdigest(for_hash.inspect)
+    end
+
+    def config_hash_path
+      Base.docs_path + doc_path + 'config.hash'
+    end
+
+    def created_rid_path
+      Base.docs_path + doc_path + 'created.rid'
+    end
+
+    def last_build_time
+      Time.parse(created_rid_path.read) rescue nil
+    end
+
+    def clobber?
+      full_doc_path = Base.docs_path + doc_path
+      return true unless full_doc_path.exist?
+
+      created_hash = config_hash_path.read rescue nil
+      return true if created_hash != config_hash
+    end
+  end
+
+  class Task < BaseTask
     attr_reader :src_path, :doc_path, :paths, :main, :title, :index
     def initialize(options = {})
       options[:paths] ||= []
@@ -45,36 +71,20 @@ class SdocAll
 
         if (Base.docs_path + doc_path).directory?
           config_hash_path.open('w') do |f|
-            f.write(hash)
+            f.write(config_hash)
           end
         end
       end
     end
 
-    def hash
+    def for_hash
       for_hash = [src_path.to_s, doc_path.to_s, paths, main, title, last_build_time]
       for_hash << index if index
-      Digest::SHA1.hexdigest(for_hash.inspect)
-    end
-
-    def config_hash_path
-      Base.docs_path + doc_path + 'config.hash'
-    end
-
-    def created_rid_path
-      Base.docs_path + doc_path + 'created.rid'
-    end
-
-    def last_build_time
-      Time.parse(created_rid_path.read) rescue nil
+      for_hash
     end
 
     def clobber?
-      full_doc_path = Base.docs_path + doc_path
-      return true unless full_doc_path.exist?
-
-      created_hash = config_hash_path.read rescue nil
-      return true if created_hash != hash
+      return true if super
 
       latest = [src_path.mtime, src_path.ctime].max
       created = last_build_time
@@ -86,6 +96,65 @@ class SdocAll
         end
       end
       created.nil? || latest >= created
+    end
+
+    def occupied_doc_pathes
+      [doc_path]
+    end
+  end
+
+  class MergeTask < BaseTask
+    attr_reader :doc_path, :title, :tasks, :titles
+    def initialize(options = {})
+      @doc_path = options[:doc_path]
+      @title = options[:title]
+      @tasks = options[:tasks_options].map do |task_options|
+        Task.new(task_options.merge(
+          :doc_path => "#{parts_path}/#{task_options[:doc_path]}",
+          :title => "#{title}: #{task_options[:title]}"
+        ))
+      end
+      @titles = options[:tasks_options].map do |task_options|
+        task_options[:title]
+      end
+    end
+
+    def parts_path
+      "#{doc_path}_parts"
+    end
+
+    def run(options = {})
+      p clobber?
+      if clobber?
+        Base.remove_if_present(Base.docs_path + doc_path)
+
+        tasks.each do |task|
+          task.run(options)
+        end
+
+        Dir.chdir(Base.docs_path) do
+          cmd = %w(sdoc-merge)
+          cmd << '-o' << Base.docs_path + doc_path
+          cmd << '-t' << title
+          cmd << '-n' << titles.join(',')
+          cmd << '-u' << tasks.map{ |task| "../#{task.doc_path}" }.join(' ')
+          Base.system(*cmd + tasks.map(&:doc_path))
+        end
+      end
+    end
+
+    def for_hash
+      [doc_path.to_s, title, tasks.map(&:config_hash).join(' ')]
+    end
+
+    def clobber?
+      return true if super
+
+      tasks.any?(&:clobber?)
+    end
+
+    def occupied_doc_pathes
+      [doc_path, parts_path]
     end
   end
 end
