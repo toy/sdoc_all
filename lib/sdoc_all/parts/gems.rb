@@ -10,17 +10,17 @@ class SdocAll
         :exclude => config_exclude_option(config),
       }
 
+      if specs.empty?
+        options = @config.map do |option, values|
+          "#{option} => #{Array(values).join(',')}" if values.present?
+        end.compact.join(', ')
+        raise ConfigError.new("no gems matches #{options}")
+      end
+
       raise_unknown_options_if_not_blank!(config)
     end
 
     def add_tasks(options = {})
-      specs = config[:versions] == 'all' ? self.class.all_specs : self.class.latest_specs
-
-      specs.sort_by!{ |spec| [spec.name.downcase, spec.sort_obj] }
-
-      specs.delete_if{ |spec| !config[:only].include?(spec.name.downcase) } if config[:only]
-      specs.delete_if{ |spec| config[:exclude].include?(spec.name.downcase) }
-
       specs.each do |spec|
         main = nil
         spec.rdoc_options.each_cons(2) do |options|
@@ -34,6 +34,19 @@ class SdocAll
           :title => "gems: #{spec.full_name}"
         )
       end
+    end
+
+  private
+
+    def specs
+      specs = config[:versions] == 'all' ? self.class.all_specs : self.class.latest_specs
+
+      specs.sort_by!{ |spec| [spec.name.downcase, spec.sort_obj] }
+
+      specs.delete_if{ |spec| !config[:only].include?(spec.name.downcase) } if config[:only]
+      specs.delete_if{ |spec| config[:exclude].include?(spec.name.downcase) }
+
+      specs
     end
 
     module ClassMethods
