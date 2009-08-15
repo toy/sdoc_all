@@ -116,7 +116,7 @@ class SdocAll
           end
         end
       rescue ConfigError => e
-        STDERR.puts e.to_s
+        STDERR.puts "\e[1;31m#{e.to_s}\e[0m"
       end
     end
 
@@ -153,7 +153,7 @@ class SdocAll
           end
         end
         if errors.present?
-          raise ConfigError.new(errors)
+          raise ConfigError.new(errors.join("\n"))
         end
       else
         raise ConfigError.new("config did not specify what to document")
