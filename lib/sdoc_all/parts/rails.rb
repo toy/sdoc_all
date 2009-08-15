@@ -1,12 +1,12 @@
 class SdocAll
   class Rails < Base
-    def initialize(config)
-      config ||= {}
-      config = {:version => config} unless config.is_a?(Hash)
+    def initialize(raw_config)
+      raw_config ||= {}
+      raw_config = {:version => raw_config} unless raw_config.is_a?(Hash)
 
-      if config[:version]
-        unless self.class.versions.include?(config[:version])
-          raise ConfigError.new("you don't have rails #{config[:version]} installed")
+      if raw_config[:version]
+        unless self.class.versions.include?(raw_config[:version])
+          raise ConfigError.new("you don't have rails #{raw_config[:version]} installed")
         end
       else
         if self.class.versions.empty?
@@ -15,14 +15,14 @@ class SdocAll
       end
 
       @config = {
-        :version => config.delete(:version) || self.class.versions.last,
+        :version => raw_config.delete(:version) || self.class.versions.last,
       }
 
-      raise_unknown_options_if_not_blank!(config)
+      raise_unknown_options_if_not_blank!(raw_config)
     end
 
     def add_tasks(options = {})
-      version = @config[:version]
+      version = config[:version]
       path = sources_path + version
 
       unless path.directory?

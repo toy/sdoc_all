@@ -1,20 +1,20 @@
 class SdocAll
   class Gems < Base
-    def initialize(config)
-      config ||= {}
-      config = {:only => config} unless config.is_a?(Hash)
+    def initialize(raw_config)
+      raw_config ||= {}
+      raw_config = {:only => raw_config} unless raw_config.is_a?(Hash)
 
       @config = {
-        :versions => config.delete(:versions).to_s.downcase,
-        :only => config_only_option(config),
-        :exclude => config_exclude_option(config),
+        :versions => raw_config.delete(:versions).to_s.downcase,
+        :only => config_only_option(raw_config),
+        :exclude => config_exclude_option(raw_config),
       }
 
       errors = []
       gem_names = unfiltered_specs.map{ |spec| spec.name.downcase }
       [:only, :exclude].each do |option|
-        if @config[option]
-          @config[option].each do |gem_name|
+        if config[option]
+          config[option].each do |gem_name|
             errors << "#{option} #{gem_name} does not match any gem" unless gem_names.include?(gem_name)
           end
         end
@@ -24,13 +24,13 @@ class SdocAll
       end
 
       if filtered_specs.empty?
-        options = @config.map do |option, values|
+        options = config.map do |option, values|
           "#{option} => #{Array(values).join(',')}" if values.present?
         end.compact.join(', ')
         raise ConfigError.new("no gems matches #{options}")
       end
 
-      raise_unknown_options_if_not_blank!(config)
+      raise_unknown_options_if_not_blank!(raw_config)
     end
 
     def add_tasks(options = {})

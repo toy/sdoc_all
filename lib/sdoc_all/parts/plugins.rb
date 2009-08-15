@@ -1,27 +1,27 @@
 class SdocAll
   class Plugins < Base
-    def initialize(config)
-      config ||= {}
-      config = {:path => config} unless config.is_a?(Hash)
+    def initialize(raw_config)
+      raw_config ||= {}
+      raw_config = {:path => raw_config} unless raw_config.is_a?(Hash)
 
-      config[:path] ||= sources_path
+      raw_config[:path] ||= sources_path
 
       @config = {
-        :update => config.delete(:update) != false,
-        :path => Pathname.new(config.delete(:path)).expand_path,
-        :only => config_only_option(config),
-        :exclude => config_exclude_option(config),
+        :update => raw_config.delete(:update) != false,
+        :path => Pathname.new(raw_config.delete(:path)).expand_path,
+        :only => config_only_option(raw_config),
+        :exclude => config_exclude_option(raw_config),
       }
 
-      unless @config[:path].directory?
-        raise ConfigError.new("path #{@config[:path]} is not a directory")
+      unless config[:path].directory?
+        raise ConfigError.new("path #{config[:path]} is not a directory")
       end
 
-      raise_unknown_options_if_not_blank!(config)
+      raise_unknown_options_if_not_blank!(raw_config)
     end
 
     def add_tasks(options = {})
-      plugins = @config[:path].children.map do |path|
+      plugins = config[:path].children.map do |path|
         path if path.directory?
       end.compact
 

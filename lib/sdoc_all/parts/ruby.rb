@@ -2,30 +2,30 @@ require 'net/ftp'
 
 class SdocAll
   class Ruby < Base
-    def initialize(config)
-      config ||= {}
-      config = {:version => config} unless config.is_a?(Hash)
+    def initialize(raw_config)
+      raw_config ||= {}
+      raw_config = {:version => raw_config} unless raw_config.is_a?(Hash)
 
       @config = {
-        :update => config.delete(:update) != false,
-        :version => config.delete(:version),
-        :index => config.delete(:index),
+        :update => raw_config.delete(:update) != false,
+        :version => raw_config.delete(:version),
+        :index => raw_config.delete(:index),
       }
 
-      version = @config[:version]
+      version = config[:version]
       unless version.present?
         raise ConfigError.new("specify version of ruby (place archive to 'sources' directory or it will be download from ftp://ftp.ruby-lang.org/)")
       end
       self.class.find_or_download_matching_archive(version)
 
-      if @config[:index]
-        index = Pathname(@config[:index])
+      if config[:index]
+        index = Pathname(config[:index])
         unless index.directory? && (index + 'index.html').file?
           raise ConfigError.new("index should be a directory with index.html inside and all related files should be with relative links")
         end
       end
 
-      raise_unknown_options_if_not_blank!(config)
+      raise_unknown_options_if_not_blank!(raw_config)
     end
 
     def add_tasks(options = {})

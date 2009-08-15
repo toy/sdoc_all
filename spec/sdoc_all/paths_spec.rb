@@ -14,7 +14,7 @@ class SdocAll
         Pathname.should_receive(:new).with("#{sym}").and_return(@roots[sym])
         Base.should_receive(:add_task).with(:doc_path => "paths.lala.#{sym}_exp", :src_path => @roots[sym].expand_path, :title => "paths: lala/#{sym}_exp")
       end
-      Paths.should_receive(:common_path).with([@roots[:a], @roots[:b], @roots[:c]].map(&:expand_path)).and_return('/common')
+      Paths.should_receive(:common_path).with(@roots.values_at(:a, :b, :c).map(&:expand_path)).and_return('/common')
 
       File.should_receive(:expand_path).with('*').and_return('/common/lala/*')
       Dir.should_receive(:[]).with('/common/lala/*').and_return(['a', 'b', 'c'])
@@ -28,7 +28,7 @@ class SdocAll
         Pathname.should_receive(:new).with("#{sym}").and_return(@roots[sym])
         Base.should_receive(:add_task).with(:doc_path => "paths.lala.#{sym}_exp", :src_path => @roots[sym].expand_path, :title => "paths: lala/#{sym}_exp")
       end
-      Paths.should_receive(:common_path).with([@roots[:a], @roots[:b], @roots[:d], @roots[:e]].map(&:expand_path)).and_return('/common')
+      Paths.should_receive(:common_path).with(@roots.values_at(:a, :b, :d, :e).map(&:expand_path)).and_return('/common')
 
       File.should_receive(:expand_path).with('*').and_return('/common/lala/*')
       File.should_receive(:expand_path).with('**').and_return('/common/common/lala/*')
@@ -96,6 +96,22 @@ class SdocAll
 
         Paths.new([{:root => '/lalala/lala/root'}, {:root => '/lalala/lolo/other'}]).add_tasks
       end
+    end
+
+    it "should add task for mixed config" do
+      @roots = {}
+      [:a, :b, :c, :d, :e, :f, :g].each do |sym|
+        @roots[sym] = mock(sym, :expand_path => mock("#{sym}_exp".to_sym, :exist? => true, :relative_path_from => "lala/#{sym}_exp"))
+        Pathname.should_receive(:new).with("#{sym}").and_return(@roots[sym])
+        Base.should_receive(:add_task).with(:doc_path => "paths.lala.#{sym}_exp", :src_path => @roots[sym].expand_path, :title => "paths: lala/#{sym}_exp")
+      end
+      Paths.should_receive(:common_path).with(@roots.values_at(:a, :b, :c, :d, :e, :f, :g).map(&:expand_path)).and_return('/common')
+
+      File.should_receive(:expand_path).with('*').and_return('/common/lala/*')
+      Dir.should_receive(:[]).with('/common/lala/*').and_return(['b', 'c'])
+      File.should_receive(:expand_path).with('**').and_return('/common/lala/**')
+      Dir.should_receive(:[]).with('/common/lala/**').and_return(['e', 'f'])
+      Paths.new([{:root => 'a'}, '*', {:root => 'd'}, '**', {:root => 'g'}]).add_tasks
     end
   end
 end

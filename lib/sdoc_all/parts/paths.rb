@@ -1,39 +1,53 @@
 class SdocAll
   class Paths < Base
-    def initialize(config)
-      config = [config] unless config.is_a?(Array)
+    def initialize(raw_config)
+      raw_config = [raw_config] unless raw_config.is_a?(Array)
 
-      config.each do |entry|
-        case entry
-        when Hash
-          entry.symbolize_keys!
-
-          unless entry[:root].present?
-            raise ConfigError.new("specify what to document")
+      errors = []
+      raw_config.each do |raw_entry|
+        begin
+          raw_entries = case raw_entry
+          when Hash
+            [raw_entry]
+          when String
+            Dir[File.expand_path(raw_entry)].map{ |path| {:root => path} }
+          else
+            raise_unknown_options_if_not_blank!(raw_entry)
           end
 
-          root = Pathname.new(entry.delete(:root)).expand_path
+          raw_entries.each do |entry|
+            begin
+              entry.symbolize_keys!
 
-          unless root.exist?
-            raise ConfigError.new("path #{root} does not exist")
+              unless entry[:root].present?
+                raise ConfigError.new("specify what to document")
+              end
+
+              root = Pathname.new(entry.delete(:root)).expand_path
+
+              unless root.exist?
+                raise ConfigError.new("path #{root} does not exist")
+              end
+
+              paths = entry.delete(:paths)
+              paths = [paths] if paths && !paths.is_a?(Array)
+
+              entries << {
+                :root => root,
+                :main => entry.delete(:main),
+                :paths => paths,
+              }
+              raise_unknown_options_if_not_blank!(entry)
+            rescue ConfigError => e
+              errors << e
+            end
           end
-
-          paths = entry.delete(:paths)
-          paths = [paths] if paths && !paths.is_a?(Array)
-
-          entries << {
-            :root => root,
-            :main => entry.delete(:main),
-            :paths => paths,
-          }
-          raise_unknown_options_if_not_blank!(entry)
-        when String
-          Dir[File.expand_path(entry)].each do |path|
-            config << {:root => path}
-          end
-        else
-          raise_unknown_options_if_not_blank!(entry)
+        rescue ConfigError => e
+          errors << e
         end
+      end
+      unless errors.empty?
+        raise ConfigError.new(errors.join("\n"))
       end
     end
 
