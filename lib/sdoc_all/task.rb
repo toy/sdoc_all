@@ -25,6 +25,18 @@ class SdocAll
       created_hash = config_hash_path.read rescue nil
       return true if created_hash != config_hash
     end
+
+    def run_if_clobber
+      if clobber?
+        Base.remove_if_present(Base.docs_path + doc_path)
+        yield
+        if (Base.docs_path + doc_path).directory?
+          config_hash_path.open('w') do |f|
+            f.write(config_hash)
+          end
+        end
+      end
+    end
   end
 
   class Task < BaseTask
@@ -44,9 +56,7 @@ class SdocAll
     end
 
     def run(options = {})
-      if clobber?
-        Base.remove_if_present(Base.docs_path + doc_path)
-
+      run_if_clobber do
         cmd = %w(sdoc)
         cmd << '-o' << Base.docs_path + doc_path
         cmd << '-t' << title
@@ -67,12 +77,6 @@ class SdocAll
           end
         else
           Base.system(*cmd + [src_path])
-        end
-
-        if (Base.docs_path + doc_path).directory?
-          config_hash_path.open('w') do |f|
-            f.write(config_hash)
-          end
         end
       end
     end
@@ -124,10 +128,8 @@ class SdocAll
     end
 
     def run(options = {})
-      if clobber?
-        Base.remove_if_present(Base.docs_path + doc_path)
-
-        tasks.each do |task|
+      run_if_clobber do
+        tasks.each_with_progress(title) do |task|
           task.run(options)
         end
 
@@ -143,7 +145,7 @@ class SdocAll
     end
 
     def for_hash
-      [doc_path.to_s, title, tasks.map(&:config_hash).join(' ')]
+      [doc_path.to_s, title, tasks.map(&:for_hash)]
     end
 
     def clobber?
