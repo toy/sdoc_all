@@ -1,7 +1,10 @@
 ---
 min_update_interval: 1 hour
+title: "ruby, rails, gems"
 sdoc: # watch indent in this section - it must be 4 spaces
-- ruby: 1.8.7
+- ruby:
+    version: 1.8.7
+    stdlib: true
 - rails
 - gems:
     exclude:
@@ -12,5 +15,5 @@ sdoc: # watch indent in this section - it must be 4 spaces
     - activerecord
     - activeresource
     - activesupport
-- plugins: ~/.plugins
+# - plugins: ~/.plugins
 # - path: ~/some/path
