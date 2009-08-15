@@ -24,7 +24,7 @@ describe SdocAll do
       @tasks = []
       @each = @tasks.should_receive(:each_with_progress)
       %w(a b c).each do |c|
-        task = mock(c, :doc_path => "#{c}", :src_path => "/sources/#{c}", :title => "<#{c}>")
+        task = mock(c, :doc_path => "#{c}", :src_path => "/sources/#{c}", :title => "<#{c}>", :config_hash => 'abc')
         task.should_receive(:run)
         File.should_receive(:file?).with(Pathname.new("/docs/#{c}/index.html")).and_return(true)
         @each.and_yield(task)
