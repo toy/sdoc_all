@@ -107,10 +107,6 @@ class SdocAll
       end
 
       def add_task(options = {})
-        options[:paths] ||= []
-        [/^readme$/i, /^readme\.(?:txt|rdoc|markdown)$/i, /^readme\./i].each do |readme_r|
-          options[:main] ||= options[:paths].grep(readme_r).first
-        end
         @@tasks << Task.new(options)
       end
 

@@ -4,6 +4,11 @@ class SdocAll
   class Task
     attr_reader :src_path, :doc_path, :paths, :main, :title, :index
     def initialize(options = {})
+      options[:paths] ||= []
+      [/^readme$/i, /^readme\.(?:txt|rdoc|markdown)$/i, /^readme\./i].each do |readme_r|
+        options[:main] ||= options[:paths].grep(readme_r).first
+      end
+
       @src_path = Pathname.new(options[:src_path]).expand_path
       @doc_path = options[:doc_path]
       @paths = options[:paths]
