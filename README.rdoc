@@ -53,6 +53,11 @@ also as ruby has no index page, you can create folder with index.html in it (als
       version: 1.8.6
       index: ruby_quick_ref
 
+to build stdlib documentation for every group not fully present in ruby documentation (based on http://stdlib-doc.rubyforge.org)
+  - ruby:
+      version: 1.8.6
+      stdlib: true
+
 === rails
 choose rails version
   - rails: 2.3.2

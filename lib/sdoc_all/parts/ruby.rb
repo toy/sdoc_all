@@ -1,4 +1,5 @@
 require 'net/ftp'
+require 'net/http'
 
 class SdocAll
   class Ruby < Base
@@ -10,6 +11,7 @@ class SdocAll
         :update => raw_config.delete(:update) != false,
         :version => raw_config.delete(:version),
         :index => raw_config.delete(:index),
+        :stdlib => raw_config.delete(:stdlib),
       }
 
       version = config[:version]
@@ -25,16 +27,20 @@ class SdocAll
         end
       end
 
+      if config[:stdlib]
+        download_and_get_stdlib_config
+      end
+
       raise_unknown_options_if_not_blank!(raw_config)
     end
 
     def add_tasks(options = {})
       archive = self.class.find_or_download_matching_archive(config[:version], :update => config[:update] && options[:update])
       version = archive.full_version
-      path = sources_path + version
+      src_path = sources_path + version
 
-      unless path.directory?
-        Base.remove_if_present(path)
+      unless src_path.directory?
+        Base.remove_if_present(src_path)
         case archive.extension
         when 'tar.bz2'
           Base.system('tar', '-xjf', archive.path, '-C', sources_path)
@@ -43,20 +49,98 @@ class SdocAll
         when 'zip'
           Base.system('unzip', '-q', archive.path, '-d', sources_path)
         end
-        File.rename(sources_path + "ruby-#{version}", path)
+        File.rename(sources_path + "ruby-#{version}", src_path)
       end
-      self.class.used_sources << path
+      self.class.used_sources << src_path
 
       task_options = {
-        :src_path => path,
+        :src_path => src_path,
         :doc_path => "ruby-#{version}",
         :title => "ruby-#{version}"
       }
       task_options[:index] = config[:index] if config[:index]
       Base.add_task(task_options)
+
+      if config[:stdlib]
+        stdlib_config = download_and_get_stdlib_config(:update => config[:update] && options[:update])
+
+        stdlib_tasks = []
+        Dir.chdir(src_path) do
+          main_files_to_document = get_files_to_document
+          stdlib_config['targets'].each do |target|
+            name = target['target']
+
+            paths = FileList.new
+            paths.include("{lib,ext}/#{name}/**/README*")
+            paths.include("{lib,ext}/#{name}.{c,rb}")
+            paths.include("{lib,ext}/#{name}/**/*.{c,rb}")
+            paths.resolve
+            paths.reject! do |path|
+              [%r{/extconf.rb\Z}, %r{/test/(?!unit)}, %r{/tests/}, %r{/sample}, %r{/demo/}].any?{ |pat| pat.match path }
+            end
+
+            if paths.present? && (paths - main_files_to_document).present?
+              stdlib_tasks << {
+                :src_path => src_path,
+                :doc_path => name.gsub(/[^a-z0-9\-_]/i, '-'),
+                :paths => paths.to_a,
+                :main => target['mainpage'],
+                :title => name
+              }
+            end
+          end
+        end
+        Base.add_merge_task(
+          :doc_path => "ruby-stdlib-#{version}",
+          :title => "ruby-stdlib-#{version}",
+          :tasks_options => stdlib_tasks.sort_by{ |task| task[:title].downcase }
+        )
+      end
     end
 
   private
+
+    def get_files_to_document(dir = nil)
+      files = []
+
+      dot_document_name = '.document'
+      dot_document_path = dir ? dir + dot_document_name : Pathname(dot_document_name)
+      if dot_document_path.exist?
+        dot_document_path.readlines.map(&:strip).reject(&:blank?).reject{ |line| line[/^\s*#/] }
+      else
+        ['*']
+      end.each do |glob|
+        Pathname.glob(dir ? dir + glob : glob) do |path|
+          if path.directory?
+            files.concat(get_files_to_document(path))
+          else
+            files << path.to_s
+          end
+        end
+      end
+
+      files
+    end
+
+    def download_and_get_stdlib_config(options = {})
+      stdlib_config_url = 'http://stdlib-doc.rubyforge.org/svn/trunk/data/gendoc.yaml'
+      if options[:update] || (config = get_stdlib_config).nil?
+        data = Net::HTTP.get(URI.parse(stdlib_config_url))
+        stdlib_config_path.write(data)
+        if (config = get_stdlib_config).nil?
+          raise ConfigError.new("could not get stdlib config from #{stdlib_config_url}")
+        end
+      end
+      config
+    end
+
+    def get_stdlib_config
+      YAML.load_file stdlib_config_path if stdlib_config_path.readable?
+    end
+
+    def stdlib_config_path
+      sources_path.parent + 'stdlib-gendoc.yaml'
+    end
 
     ArchiveInfo = Struct.new(:path, :name, :full_version, :extension, :version)
     module ClassMethods
