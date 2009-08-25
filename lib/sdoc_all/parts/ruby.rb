@@ -9,16 +9,26 @@ class SdocAll
 
       @config = {
         :update => raw_config.delete(:update) != false,
-        :version => raw_config.delete(:version),
+        :version => raw_config.delete(:version).to_s,
         :index => raw_config.delete(:index),
         :stdlib => raw_config.delete(:stdlib),
       }
 
-      version = config[:version]
-      unless version.present?
+      unless config[:version].present?
         raise ConfigError.new("specify version of ruby (place archive to 'sources' directory or it will be download from ftp://ftp.ruby-lang.org/)")
       end
-      self.class.find_or_download_matching_archive(version)
+
+      if binary = config[:version][/^`(.*)`$/, 1]
+        version = `#{binary} -e 'print "\#{RUBY_VERSION}-p\#{RUBY_PATCHLEVEL}"'`
+        if $?.success? && version[/^\d+\.\d+\.\d+-p\d+$/]
+          config[:version] = version
+          puts "binary `#{binary}` is of version #{version}"
+        else
+          raise ConfigError.new("binary `#{binary}` failed or does not seem to be ruby binary as version returned is #{version.inspect}")
+        end
+      end
+
+      self.class.find_or_download_matching_archive(config[:version])
 
       if config[:index]
         index = Pathname(config[:index])
@@ -172,16 +182,34 @@ class SdocAll
 
       def download_matching_archive(version)
         Net::FTP.open('ftp.ruby-lang.org') do |ftp|
-          remote_path = '/pub/ruby'
+          remote_path = Pathname('/pub/ruby')
           ftp.debug_mode = true
           ftp.passive = true
           ftp.login
           ftp.chdir(remote_path)
-          paths = ftp.list('ruby-*.tar.bz2').map{ |line| "#{remote_path}/#{line.split.last}" }
 
-          if tar = last_matching_ruby_archive(version, paths)
+          tar = nil
+
+          dirs, files = [], []
+          ftp.list('*').map do |line|
+            full_path = remote_path + line.split.last
+            (line.starts_with?('d') ? dirs : files) << full_path
+          end
+
+          tar_bz2_matcher = /(^|\/)ruby-.*\.tar\.bz2$/
+
+          unless tar = last_matching_ruby_archive(version, files.grep(tar_bz2_matcher)) || last_matching_ruby_archive(version, files)
+            dirs = dirs.sort_by{ |dir| s = dir.basename.to_s; v = s.to_f; [v, s] }.reverse.
+                        select{ |dir| dir.basename.to_s[/^\d/] && dir.basename.to_s.starts_with?(version[0, 3]) }
+            dirs.each do |dir|
+              files = ftp.nlst(dir)
+              break if tar = last_matching_ruby_archive(version, files.grep(tar_bz2_matcher)) || last_matching_ruby_archive(version, files)
+            end
+          end
+
+          if tar
             dest = sources_path.parent + tar.name
-            unless File.exist?(dest) && File.size(dest) == ftp.size(tar.path)
+            unless dest.exist? && dest.size == ftp.size(tar.path)
               ftp.getbinaryfile(tar.path, dest)
             end
           end

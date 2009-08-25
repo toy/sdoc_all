@@ -43,6 +43,14 @@ carefully watch indent - 4 spaces for options
 ruby 1.8.6 source will be downloaded for you from ftp.ruby-lang.org and placed in folder sources
   - ruby: 1.8.6
 
+to auto detect ruby version pass `ruby binary` instead of version (this binary will be asked to execute <tt>print "#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL}"</tt>)
+  - ruby: `ruby`
+or
+  - ruby: `/usr/bin/ruby`
+or
+  - ruby: `/usr/bin/env ruby`
+…
+
 if you don't want updates use this
   - ruby:
       version: 1.8.6
