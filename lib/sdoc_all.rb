@@ -1,5 +1,3 @@
-#!/usr/bin/ruby
-
 require 'pathname'
 require 'fileutils'
 require 'find'
