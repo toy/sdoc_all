@@ -60,18 +60,22 @@ class SdocAll
       describe "download_matching_archive" do
         before do
           @ftp = mock(:ftp, :debug_mode= => nil, :passive= => nil, :login => nil)
-          @ftp.should_receive(:chdir).with('/pub/ruby')
-          @list = ['mode user ... a', 'mode user ... b', 'mode user ... c']
-          @paths = ['/pub/ruby/a', '/pub/ruby/b', '/pub/ruby/c']
-          @ftp.should_receive(:list).with('ruby-*.tar.bz2').and_return(@list)
+          @ftp.should_receive(:chdir).with(Pathname('/pub/ruby'))
+          @list = ['mode user ... ruby-1.2.3.tar.bz2', 'mode user ... ruby-1.2.4.tar.bz2', 'mode user ... ruby-1.2.5.tar.bz2']
+          @paths = [Pathname('/pub/ruby/ruby-1.2.3.tar.bz2'), Pathname('/pub/ruby/ruby-1.2.4.tar.bz2'), Pathname('/pub/ruby/ruby-1.2.5.tar.bz2')]
+          @ftp.should_receive(:list).with('*').and_return(@list)
           Net::FTP.should_receive(:open).with('ftp.ruby-lang.org').and_yield(@ftp)
+
+          @dest = mock(:dest)
+          @sources_path = mock(:sources_path, :parent => mock(:parent, :children => @children, :+ => @dest))
+          Ruby.stub!(:sources_path).and_return(@sources_path)
         end
 
         it "should not download anything if no matces" do
           @ftp.should_not_receive(:size)
           @ftp.should_not_receive(:getbinaryfile)
 
-          Ruby.should_receive(:last_matching_ruby_archive).with('1.2.3', @paths).and_return(nil)
+          Ruby.should_receive(:last_matching_ruby_archive).with('1.2.3', @paths).any_number_of_times.and_return(nil)
           Ruby.download_matching_archive('1.2.3')
         end
 
@@ -81,7 +85,7 @@ class SdocAll
           end
 
           it "should download if it does not exist locally" do
-            File.stub!(:exist?).and_return(false)
+            @dest.stub!(:exist?).and_return(false)
             @ftp.should_receive(:getbinaryfile)
 
             Ruby.should_receive(:last_matching_ruby_archive).with('1.2.3', @paths).and_return(@tar)
@@ -89,8 +93,8 @@ class SdocAll
           end
 
           it "should download if local file size is not equal to remote" do
-            File.stub!(:exist?).and_return(true)
-            File.stub!(:size).and_return(1000)
+            @dest.stub!(:exist?).and_return(true)
+            @dest.stub!(:size).and_return(1000)
             @ftp.stub!(:size).and_return(2000)
             @ftp.should_receive(:getbinaryfile)
 
@@ -98,9 +102,9 @@ class SdocAll
             Ruby.download_matching_archive('1.2.3')
           end
 
-          it "should not download if local file size is to remote" do
-            File.stub!(:exist?).and_return(true)
-            File.stub!(:size).and_return(2000)
+          it "should not download if local file size is equal to remote" do
+            @dest.stub!(:exist?).and_return(true)
+            @dest.stub!(:size).and_return(2000)
             @ftp.stub!(:size).and_return(2000)
             @ftp.should_not_receive(:getbinaryfile)
 
