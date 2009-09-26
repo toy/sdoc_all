@@ -4,8 +4,8 @@ require 'rubygems'
 require 'rubigen'
 
 if %w(-v --version).include? ARGV.first
-  version = YAML.load_file(File.join(File.dirname(__FILE__), '../VERSION.yml'))
-  puts "#{File.basename($0)} #{version.join('.')}"
+  version = YAML.load_file(Pathname(__FILE__).dirname.parent + 'VERSION.yml').join('.')
+  puts "#{File.basename($0)} #{version}"
   exit(0)
 end
 
