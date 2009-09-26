@@ -17,6 +17,7 @@ echoe = Echoe.new('sdoc_all', version) do |p|
   p.runtime_dependencies << 'rake'
   p.runtime_dependencies << 'progress >=0.0.8'
   p.runtime_dependencies << 'sdoc'
+  p.runtime_dependencies << 'rubigen'
   p.project = 'toytoy'
 end
 
