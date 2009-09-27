@@ -14,10 +14,11 @@ echoe = Echoe.new('sdoc_all', version) do |p|
   p.email = 'ivan@workisfun.ru'
   p.url = 'http://github.com/toy/sdoc_all'
   p.runtime_dependencies << 'activesupport'
-  p.runtime_dependencies << 'rake'
+  p.runtime_dependencies << 'colored'
   p.runtime_dependencies << 'progress >=0.0.8'
-  p.runtime_dependencies << 'sdoc'
+  p.runtime_dependencies << 'rake'
   p.runtime_dependencies << 'rubigen'
+  p.runtime_dependencies << 'sdoc'
   p.project = 'toytoy'
 end
 

@@ -66,7 +66,7 @@ class SdocAll
 
         if entry[:paths]
           paths = FileList.new
-          Dir.chdir(path) do
+          Base.chdir(path) do
             entry[:paths].each do |glob|
               m = /^([+-]?)(.*)$/.match(glob)
               if m[1] == '-'

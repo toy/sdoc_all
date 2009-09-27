@@ -1,3 +1,5 @@
+require 'shell_escape'
+
 class SdocAll
   class Base
     attr_reader :config
@@ -32,6 +34,19 @@ class SdocAll
       BASE_PATH = Pathname.new(Dir.pwd).expand_path
       DOCS_PATH = BASE_PATH + 'docs'
       PUBLIC_PATH = BASE_PATH + 'public'
+
+      def dry_run!
+        @@dry_run = true
+      end
+      def dry_run?
+        defined?(@@dry_run) && @@dry_run
+      end
+      def verbose_level=(val)
+        @@verbose_level = val
+      end
+      def verbose_level
+        defined?(@@verbose_level) ? @@verbose_level : 0
+      end
 
       def base_path
         BASE_PATH
@@ -88,7 +103,7 @@ class SdocAll
 
       def tasks(options = {})
         @@tasks = []
-        entries.each do |entry|
+        entries.with_progress('configuring').each do |entry|
           entry.add_tasks(options)
         end
         subclasses.values.each do |subclass|
@@ -115,14 +130,60 @@ class SdocAll
       end
 
       def system(*args)
-        escaped_args = args.map(&:to_s).map{ |arg| arg[/[^a-z0-9\/\-.]/i] ? arg.inspect : arg }
-        command = escaped_args.join(' ')
-        puts "Executing #{command.length > 250 ? "#{command[0, 247]}..." : command}"
-        Kernel.system(*args)
+        command = args.length == 1 ? args.first : ShellEscape.command(*args)
+        if verbose_level >= 1
+          puts [dirs.last && "cd #{dirs.last}", command].compact.join('; ').shrink(250).blue
+        end
+        unless dry_run?
+          if verbose_level >= 2
+            Kernel.system(*args)
+          else
+            rd, wr = IO::pipe
+
+            pid = fork{
+              rd.close
+              STDOUT.reopen(wr)
+              STDERR.reopen(wr)
+              wr.close
+              exec(*args)
+            }
+
+            wr.close
+            begin
+              true while line = rd.gets
+            ensure
+              rd.close unless rd.closed?
+              Process.wait(pid)
+            end
+          end
+          unless $?.success?
+            if $?.signaled?
+              raise SignalException.new($?.termsig)
+            else
+              abort("failed: #{command}")
+            end
+          end
+        end
       end
 
       def remove_if_present(path)
-        FileUtils.remove_entry(path) if File.exist?(path)
+        path = Pathname(path)
+        if path.exist?
+          puts "rm -r #{ShellEscape.word(path)}".magenta
+          FileUtils.remove_entry(path) unless dry_run?
+        end
+      end
+
+      def dirs
+        @@dirs ||= []
+      end
+
+      def chdir(path, &block)
+        path = Pathname(path)
+        dirs.push(path.expand_path)
+        Dir.chdir(path, &block)
+      ensure
+        dirs.pop
       end
 
       def with_env(key, value)
@@ -130,6 +191,25 @@ class SdocAll
         yield
       ensure
         ENV[key] = old_value
+      end
+
+      def output_for_verbose_level(n)
+        if verbose_level >= n
+          yield
+        else
+          old_stdout = $stdout
+          old_stderr = $stderr
+          dev_null = File.open('/dev/null', 'w')
+          begin
+            $stdout = dev_null
+            $stderr = dev_null
+            yield
+          ensure
+            $stdout = old_stdout
+            $stderr = old_stderr
+            dev_null.close
+          end
+        end
       end
     end
     extend ClassMethods

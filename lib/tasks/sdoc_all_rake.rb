@@ -2,9 +2,18 @@ require 'sdoc_all'
 
 task :default => :run
 
-desc "Build/update documentation"
+def run_options
+  dry_run = ENV['DRY_RUN']
+  verbose_level = ENV['VERBOSE_LEVEL'].to_i
+  {
+    :dry_run => dry_run,
+    :verbose_level => dry_run ? 2 : verbose_level
+  }
+end
+
+desc "Build/update documentation (DRY_RUN=true to skip execution of commands (sets VERBOSE_LEVEL to 1), VERBOSE_LEVEL: 0 (default) - only progress and explanations, 1 - output commands to be executed, 2 - output result of command execution)"
 task :run do
-  SdocAll.run
+  SdocAll.run(run_options)
 end
 
 desc "Clobber documentation"
@@ -16,6 +25,6 @@ end
 namespace :run do
   desc "Force update sources, before building/updating"
   task :update do
-    SdocAll.run(:update => true)
+    SdocAll.run(run_options.merge(:update => true))
   end
 end

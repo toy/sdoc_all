@@ -7,6 +7,7 @@ require 'rubygems'
 require 'activesupport'
 require 'rake'
 require 'progress'
+require 'colored'
 
 __DIR__ = File.dirname(__FILE__)
 $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
@@ -21,6 +22,16 @@ class Pathname
   def write(s)
     open('w') do |f|
       f.write(s)
+    end
+  end
+end
+
+class String
+  def shrink(max_length)
+    if length > max_length
+      "#{self[0, max_length - 1]}…"
+    else
+      self
     end
   end
 end
@@ -52,14 +63,18 @@ class SdocAll
     end
 
     def run(options = {})
+      Base.dry_run! if options[:dry_run]
+      Base.verbose_level = options[:verbose_level]
+      Progress.lines = true if Base.verbose_level >= 1
       begin
         read_config
         tasks = Base.tasks(:update => update? || options[:update])
 
         if last_build_sdoc_version.nil? || last_build_sdoc_version != current_sdoc_version
+          puts "sdoc version changed - rebuilding all docs".red unless last_build_sdoc_version.nil?
           Base.remove_if_present(Base.docs_path)
         else
-          Dir.chdir(Base.docs_path) do
+          Base.chdir(Base.docs_path) do
             to_delete = Dir.glob('*')
             tasks.each do |task|
               to_delete -= task.occupied_doc_pathes
@@ -70,15 +85,17 @@ class SdocAll
           end
         end
 
-        tasks.each_with_progress('docs') do |task|
-          task.run(options)
+        tasks.with_progress('sdoc').each do |task|
+          Progress.start(task.title) do
+            task.run(options)
+          end
         end
 
         config_hash = Digest::SHA1.hexdigest(tasks.map(&:config_hash).inspect + title.to_s)
         created_hash = config_hash_path.read rescue nil
 
         if config_hash != created_hash
-          Dir.chdir(Base.docs_path) do
+          Base.chdir(Base.docs_path) do
             paths = []
             titles = []
             urls = []
@@ -114,7 +131,7 @@ class SdocAll
           end
         end
       rescue ConfigError => e
-        STDERR.puts "\e[1;31m#{e.to_s}\e[0m"
+        abort e.to_s.red.bold
       end
     end
 
@@ -135,7 +152,7 @@ class SdocAll
 
       if config[:sdoc] && config[:sdoc].is_a?(Array) && config[:sdoc].length > 0
         errors = []
-        config[:sdoc].each do |entry|
+        config[:sdoc].with_progress('reading config').each do |entry|
           begin
             if entry.is_a?(Hash)
               if entry.length == 1

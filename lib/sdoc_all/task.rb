@@ -23,7 +23,10 @@ class SdocAll
       return true unless full_doc_path.exist?
 
       created_hash = config_hash_path.read rescue nil
-      return true if created_hash != config_hash
+      if created_hash != config_hash
+        puts "#{title}: config changed, rebuilding".red
+        return true
+      end
     end
 
     def run_if_clobber
@@ -63,7 +66,7 @@ class SdocAll
         cmd << '-T' << 'direct'
 
         if src_path.directory?
-          Dir.chdir(src_path) do
+          Base.chdir(src_path) do
             cmd << '-m' << main if main
             Base.system(*cmd + paths)
           end
@@ -96,8 +99,11 @@ class SdocAll
         src_path.find do |path|
           Find.prune if path.directory? && path.basename.to_s[0] == ?.
           latest = [latest, path.mtime, path.ctime].max
-          break unless latest < created
+          break if latest >= created
         end
+      end
+      if created && latest >= created
+        puts "#{title}: files changed since last build".red
       end
       created.nil? || latest >= created
     end
@@ -129,11 +135,13 @@ class SdocAll
 
     def run(options = {})
       run_if_clobber do
-        tasks.each_with_progress(title) do |task|
-          task.run(options)
+        tasks.each do |task|
+          Progress.start(task.title) do
+            task.run(options)
+          end
         end
 
-        Dir.chdir(Base.docs_path) do
+        Base.chdir(Base.docs_path) do
           cmd = %w(sdoc-merge)
           cmd << '-o' << Base.docs_path + doc_path
           cmd << '-t' << title

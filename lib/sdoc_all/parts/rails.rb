@@ -35,7 +35,7 @@ class SdocAll
       self.class.used_sources << path
 
       paths = FileList.new
-      Dir.chdir(path) do
+      Base.chdir(path) do
         File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
           true until f.readline['Rake::RDocTask.new("rails")']
           until (line = f.readline.strip) == '}'

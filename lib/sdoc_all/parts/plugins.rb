@@ -21,9 +21,11 @@ class SdocAll
     end
 
     def add_tasks(options = {})
-      plugins = config[:path].children.map do |path|
-        path if path.directory?
-      end.compact
+      plugins = Base.chdir(config[:path]) do
+        Pathname.glob('*').map do |path|
+          config[:path] + path if path.directory?
+        end.compact
+      end
 
       plugins.delete_if{ |plugin| !config[:only].include?(plugin.basename.to_s.downcase) } if config[:only]
       plugins.delete_if{ |plugin| config[:exclude].include?(plugin.basename.to_s.downcase) }
@@ -31,7 +33,7 @@ class SdocAll
       if config[:update] && options[:update]
         plugins.each do |plugin|
           if (plugin + '.git').directory?
-            Dir.chdir(plugin) do
+            Base.chdir(plugin) do
               Base.system('git fetch origin && git reset --hard origin')
             end
           end
@@ -40,7 +42,7 @@ class SdocAll
 
       plugins.each do |plugin|
         paths = FileList.new
-        Dir.chdir(plugin) do
+        Base.chdir(plugin) do
           paths.include('lib/**/*.rb')
           paths.include('README*')
           paths.include('CHANGELOG*')
