@@ -17,6 +17,7 @@ lib/sdoc_all/parts/plugins.rb
 lib/sdoc_all/parts/rails.rb
 lib/sdoc_all/parts/ruby.rb
 lib/sdoc_all/task.rb
+lib/shell_escape.rb
 lib/tasks/sdoc_all_rake.rb
 spec/sdoc_all/file_list_spec.rb
 spec/sdoc_all/gems_spec.rb
