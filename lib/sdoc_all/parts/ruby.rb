@@ -62,54 +62,68 @@ class SdocAll
       end
       self.class.used_sources << src_path
 
-      task_options = {
-        :src_path => src_path,
-        :doc_path => "ruby-#{version}",
-        :title => "ruby-#{version}"
-      }
-      task_options[:index] = config[:index] if config[:index]
-      Base.add_task(task_options)
-
-      if config[:stdlib]
+      if config[:stdlib] == 'integrate'
         stdlib_config = download_and_get_stdlib_config(:update => config[:update] && options[:update])
-
-        stdlib_tasks = []
+        paths = FileList.new
         Base.chdir(src_path) do
-          main_files_to_document = get_files_to_document
+          paths.add(get_ruby_files_to_document)
           stdlib_config['targets'].each do |target|
             name = target['target']
+            paths.add(get_stdlib_files_to_document(name))
+          end
+          paths.resolve
+        end
+        task_options = {
+          :src_path => src_path,
+          :doc_path => "ruby-#{version}_with_stdlib",
+          :title => "ruby-#{version} +stdlib",
+          :paths => paths.to_a
+        }
+        task_options[:index] = config[:index] if config[:index]
+        Base.add_task(task_options)
+      else
+        task_options = {
+          :src_path => src_path,
+          :doc_path => "ruby-#{version}",
+          :title => "ruby-#{version}"
+        }
+        task_options[:index] = config[:index] if config[:index]
+        Base.add_task(task_options)
 
-            paths = FileList.new
-            paths.include("{lib,ext}/#{name}/**/README*")
-            paths.include("{lib,ext}/#{name}.{c,rb}")
-            paths.include("{lib,ext}/#{name}/**/*.{c,rb}")
-            paths.resolve
-            paths.reject! do |path|
-              [%r{/extconf.rb\Z}, %r{/test/(?!unit)}, %r{/tests/}, %r{/sample}, %r{/demo/}].any?{ |pat| pat.match path }
-            end
+        if config[:stdlib]
+          stdlib_config = download_and_get_stdlib_config(:update => config[:update] && options[:update])
 
-            if paths.present? && (paths - main_files_to_document).present?
-              stdlib_tasks << {
-                :src_path => src_path,
-                :doc_path => name.gsub(/[^a-z0-9\-_]/i, '-'),
-                :paths => paths.to_a,
-                :main => target['mainpage'],
-                :title => name
-              }
+          stdlib_tasks = []
+          Base.chdir(src_path) do
+            main_files_to_document = get_ruby_files_to_document
+            stdlib_config['targets'].each do |target|
+              name = target['target']
+
+              paths = get_stdlib_files_to_document(name)
+
+              if paths.present? && (paths - main_files_to_document).present?
+                stdlib_tasks << {
+                  :src_path => src_path,
+                  :doc_path => name.gsub(/[^a-z0-9\-_]/i, '-'),
+                  :paths => paths.to_a,
+                  :main => target['mainpage'],
+                  :title => name
+                }
+              end
             end
           end
+          Base.add_merge_task(
+            :doc_path => "ruby-stdlib-#{version}",
+            :title => "ruby-stdlib-#{version}",
+            :tasks_options => stdlib_tasks.sort_by{ |task| task[:title].downcase }
+          )
         end
-        Base.add_merge_task(
-          :doc_path => "ruby-stdlib-#{version}",
-          :title => "ruby-stdlib-#{version}",
-          :tasks_options => stdlib_tasks.sort_by{ |task| task[:title].downcase }
-        )
       end
     end
 
   private
 
-    def get_files_to_document(dir = nil)
+    def get_ruby_files_to_document(dir = nil)
       files = []
 
       dot_document_name = '.document'
@@ -121,7 +135,7 @@ class SdocAll
       end.each do |glob|
         Pathname.glob(dir ? dir + glob : glob) do |path|
           if path.directory?
-            files.concat(get_files_to_document(path))
+            files.concat(get_ruby_files_to_document(path))
           else
             files << path.to_s
           end
@@ -129,6 +143,18 @@ class SdocAll
       end
 
       files
+    end
+
+    def get_stdlib_files_to_document(name)
+      paths = FileList.new
+      paths.include("{lib,ext}/#{name}/**/README*")
+      paths.include("{lib,ext}/#{name}.{c,rb}")
+      paths.include("{lib,ext}/#{name}/**/*.{c,rb}")
+      paths.resolve
+      paths.reject! do |path|
+        [%r{/extconf.rb\Z}, %r{/test/(?!unit)}, %r{/tests/}, %r{/sample}, %r{/demo/}].any?{ |pat| pat.match path }
+      end
+      paths
     end
 
     def download_and_get_stdlib_config(options = {})

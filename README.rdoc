@@ -66,6 +66,11 @@ to build stdlib documentation for every group not fully present in ruby document
       version: 1.8.6
       stdlib: true
 
+to integrate stdlib to main ruby documentation use
+  - ruby:
+      version: 1.8.6
+      stdlib: integrate
+
 === rails
 choose rails version
   - rails: 2.3.2
