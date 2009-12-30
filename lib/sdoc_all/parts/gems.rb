@@ -65,7 +65,7 @@ class SdocAll
       specs
     end
 
-    module ClassMethods
+    class << self
       def latest_specs
         Gem.source_index.latest_specs
       end
@@ -78,6 +78,5 @@ class SdocAll
         specs
       end
     end
-    extend ClassMethods
   end
 end

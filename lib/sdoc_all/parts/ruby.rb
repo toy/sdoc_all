@@ -178,7 +178,7 @@ class SdocAll
     end
 
     ArchiveInfo = Struct.new(:path, :name, :full_version, :extension, :version)
-    module ClassMethods
+    class << self
       def match_ruby_archive(path)
         name = File.basename(path)
         if match = /^ruby-((\d+\.\d+\.\d+)-p(\d+))(?:\.(tar\.(?:gz|bz2)|zip))$/.match(name)
@@ -255,6 +255,5 @@ class SdocAll
         archive
       end
     end
-    extend ClassMethods
   end
 end

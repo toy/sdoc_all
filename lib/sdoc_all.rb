@@ -39,7 +39,7 @@ class String
 end
 
 class SdocAll
-  module ClassMethods
+  class << self
     def update?
       @update.nil? || @update
     end
@@ -177,7 +177,6 @@ class SdocAll
       end
     end
   end
-  extend ClassMethods
 end
 
 require 'sdoc_all/base'

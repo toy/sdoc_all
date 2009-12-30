@@ -56,7 +56,7 @@ class SdocAll
       )
     end
 
-    module ClassMethods
+    class << self
       def versions
         [].tap do |versions|
           Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
@@ -65,6 +65,5 @@ class SdocAll
         end.sort.map(&:to_s)
       end
     end
-    extend ClassMethods
   end
 end

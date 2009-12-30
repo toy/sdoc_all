@@ -30,7 +30,7 @@ class SdocAll
       self.class.sources_path
     end
 
-    module ClassMethods
+    class << self
       BASE_PATH = Pathname.new(Dir.pwd).expand_path
       DOCS_PATH = BASE_PATH + 'docs'
       PUBLIC_PATH = BASE_PATH + 'public'
@@ -212,6 +212,5 @@ class SdocAll
         end
       end
     end
-    extend ClassMethods
   end
 end

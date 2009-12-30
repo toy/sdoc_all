@@ -91,7 +91,7 @@ class SdocAll
       @entries ||= []
     end
 
-    module ClassMethods
+    class << self
       def common_path(paths)
         common = nil
         paths.each do |path|
@@ -109,6 +109,5 @@ class SdocAll
         common = common.parent if common
       end
     end
-    extend ClassMethods
   end
 end
