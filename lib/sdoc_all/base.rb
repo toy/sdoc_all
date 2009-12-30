@@ -42,7 +42,7 @@ class SdocAll
         defined?(@@dry_run) && @@dry_run
       end
       def verbose_level=(val)
-        @@verbose_level = val
+        @@verbose_level = val.to_i
       end
       def verbose_level
         defined?(@@verbose_level) ? @@verbose_level : 0

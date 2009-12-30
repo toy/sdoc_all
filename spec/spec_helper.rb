@@ -1,6 +1,7 @@
 require 'rubygems'
 gem 'rspec'
 require 'spec'
+require 'stringio'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
@@ -16,6 +17,8 @@ Spec::Runner.configure do |config|
     Dir.stub!(:chdir).and_yield
     Net::FTP.stub!(:open)
     File.stub!(:symlink)
+    @progress_io = StringIO.new
+    Progress.stub!(:io).and_return(@progress_io)
 
     SdocAll.constants.each do |constant|
       klass = SdocAll.const_get(constant)

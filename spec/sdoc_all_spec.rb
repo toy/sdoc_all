@@ -22,7 +22,7 @@ describe SdocAll do
       SdocAll::Base.stub!(:public_path).and_return(Pathname.new('/public'))
 
       @tasks = []
-      @each = @tasks.should_receive(:each_with_progress)
+      @each = @tasks.should_receive(:each).twice
       %w(a b c).each do |c|
         task = mock(c, :doc_path => "#{c}", :src_path => "/sources/#{c}", :title => "<#{c}>", :config_hash => 'abc')
         task.should_receive(:run)

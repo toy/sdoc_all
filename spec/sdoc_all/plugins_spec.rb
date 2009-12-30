@@ -8,6 +8,7 @@ class SdocAll
 
     before do
       @one = mock(:one, :expand_path => mock(:one_expanded, :directory? => true))
+      Base.stub!(:chdir).and_yield
     end
 
     describe "path" do
@@ -19,12 +20,12 @@ class SdocAll
       it "should set default path if none given" do
         Plugins.stub!(:sources_path).and_return('sources/plugins')
         Pathname.should_receive(:new).with('sources/plugins').and_return(@one)
-        Plugins.new(nil).add_tasks
+        Plugins.new(nil)
       end
 
       it "should asume that lone argument is path" do
         Pathname.should_receive(:new).with('one').and_return(@one)
-        Plugins.new('one').add_tasks
+        Plugins.new('one')
       end
     end
 
