@@ -6,7 +6,7 @@ require 'find'
 require 'digest'
 
 require 'rubygems'
-require 'activesupport'
+require 'active_support'
 require 'rake'
 require 'progress'
 require 'colored'
