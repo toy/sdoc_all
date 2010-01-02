@@ -130,6 +130,7 @@ class SdocAll
       end
 
       def system(*args)
+        args = args.map(&:to_s)
         command = args.length == 1 ? args.first : ShellEscape.command(*args)
         if verbose_level >= 1
           puts [dirs.last && "cd #{dirs.last}", command].compact.join('; ').shrink(250).blue
