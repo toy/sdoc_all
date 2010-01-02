@@ -98,7 +98,7 @@ class SdocAll
           if common ||= path
             unless path.to_s.starts_with?(common.to_s)
               path.ascend do |path_part|
-                if common.to_s.starts_with?(path_part)
+                if common.to_s.starts_with?(path_part.to_s)
                   common = path_part
                   break
                 end
