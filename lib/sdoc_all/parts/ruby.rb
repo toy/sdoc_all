@@ -225,7 +225,7 @@ class SdocAll
 
               tar_bz2_matcher = /(^|\/)ruby-.*\.tar\.bz2$/
 
-              unless tar = last_matching_ruby_archive(version, files.grep(tar_bz2_matcher)) || last_matching_ruby_archive(version, files)
+              unless tar = last_matching_ruby_archive(version, files.select{ |file| tar_bz2_matcher === file.to_s }) || last_matching_ruby_archive(version, files)
                 dirs = dirs.sort_by{ |dir| s = dir.basename.to_s; v = s.to_f; [v, s] }.reverse.
                             select{ |dir| dir.basename.to_s[/^\d/] && dir.basename.to_s.starts_with?(version[0, 3]) }
                 dirs.each do |dir|

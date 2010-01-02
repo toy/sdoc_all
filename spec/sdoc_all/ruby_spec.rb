@@ -70,7 +70,7 @@ describe SdocAll::Ruby do
         SdocAll::Ruby.stub!(:sources_path).and_return(@sources_path)
       end
 
-      it "should not download anything if no matces" do
+      it "should not download anything if no matches" do
         @ftp.should_not_receive(:size)
         @ftp.should_not_receive(:getbinaryfile)
 
