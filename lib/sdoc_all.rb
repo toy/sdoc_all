@@ -26,6 +26,12 @@ class Pathname
       f.write(s)
     end
   end
+  def hidden?
+    basename.to_s =~ /^\./
+  end
+  def visible?
+    !hidden?
+  end
 end
 
 class String

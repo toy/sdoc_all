@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{sdoc_all}
-  s.version = "1.0.5"
+  s.version = "1.0.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Boba Fat"]
-  s.date = %q{2010-01-03}
+  s.date = %q{2010-01-12}
   s.default_executable = %q{sdoc-all}
   s.description = %q{Command line tool to get documentation for ruby, rails, gems and plugins in one place}
   s.executables = ["sdoc-all"]

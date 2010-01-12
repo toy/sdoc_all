@@ -21,7 +21,7 @@ class SdocAll
     end
 
     def add_tasks(options = {})
-      plugins = config[:path].children.select(&:directory?)
+      plugins = config[:path].children.select(&:directory?).select(&:visible?)
 
       plugins.delete_if{ |plugin| !config[:only].include?(plugin.basename.to_s.downcase) } if config[:only]
       plugins.delete_if{ |plugin| config[:exclude].include?(plugin.basename.to_s.downcase) }

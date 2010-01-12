@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/../spec_helper.rb'
 
 describe SdocAll::Plugins do
   def plugin_mock(name, options = {})
-    mock(:plugin, :basename => name, :directory? => !options[:not_directory], :+ => mock(:git_dir, :directory? => !options[:no_git]))
+    mock(:plugin, :basename => name, :directory? => !options[:not_directory], :visible? => true, :+ => mock(:git_dir, :directory? => !options[:no_git]))
   end
 
   before do
