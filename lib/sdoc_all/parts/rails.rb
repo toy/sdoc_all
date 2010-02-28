@@ -59,7 +59,7 @@ class SdocAll
     class << self
       def versions
         [].tap do |versions|
-          Gem.source_index.search(Gem::Dependency.new('rails', :all)).each do |spec|
+          Gem.source_index.search(Gem::Dependency.new('rails')).each do |spec|
             versions << spec.version
           end
         end.sort.map(&:to_s)
