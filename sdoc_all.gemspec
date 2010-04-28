@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Boba Fat"]
-  s.date = %q{2010-02-28}
+  s.date = %q{2010-04-28}
   s.default_executable = %q{sdoc-all}
   s.description = %q{Command line tool to get documentation for ruby, rails, gems and plugins in one place}
   s.executables = ["sdoc-all"]
@@ -73,14 +73,14 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<activesupport>, [">= 0"])
+      s.add_runtime_dependency(%q<activesupport>, ["= 2.3.5"])
       s.add_runtime_dependency(%q<colored>, [">= 0"])
       s.add_runtime_dependency(%q<progress>, [">= 0.0.8"])
       s.add_runtime_dependency(%q<rake>, [">= 0"])
       s.add_runtime_dependency(%q<rubigen>, [">= 0"])
       s.add_runtime_dependency(%q<sdoc>, [">= 0"])
     else
-      s.add_dependency(%q<activesupport>, [">= 0"])
+      s.add_dependency(%q<activesupport>, ["= 2.3.5"])
       s.add_dependency(%q<colored>, [">= 0"])
       s.add_dependency(%q<progress>, [">= 0.0.8"])
       s.add_dependency(%q<rake>, [">= 0"])
@@ -88,7 +88,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<sdoc>, [">= 0"])
     end
   else
-    s.add_dependency(%q<activesupport>, [">= 0"])
+    s.add_dependency(%q<activesupport>, ["= 2.3.5"])
     s.add_dependency(%q<colored>, [">= 0"])
     s.add_dependency(%q<progress>, [">= 0.0.8"])
     s.add_dependency(%q<rake>, [">= 0"])

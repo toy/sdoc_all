@@ -11,7 +11,7 @@ begin
     j.description = description
     j.homepage = "http://github.com/toy/#{name}"
     j.authors = ["Boba Fat"]
-    j.add_dependency 'activesupport'
+    j.add_dependency 'activesupport', '= 2.3.5'
     j.add_dependency 'colored'
     j.add_dependency 'progress', '>= 0.0.8'
     j.add_dependency 'rake'
