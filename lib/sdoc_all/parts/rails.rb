@@ -28,8 +28,15 @@ class SdocAll
       unless path.directory?
         Base.remove_if_present(path)
         sources_path
-          Base.system('rails', path, '--freeze')
         Base.with_env 'VERSION', version.to_s do
+          if version.to_s[/\d+/].to_i < 3
+            Base.system('rails', "_#{version}_", path)
+            Base.chdir(path) do
+              Base.system('rake', 'rails:freeze:gems')
+            end
+          else
+            Base.system('rails', "_#{version}_", 'new', path)
+          end
         end
       end
       self.class.used_sources << path
