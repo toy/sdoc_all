@@ -5,7 +5,7 @@ class SdocAll
       raw_config = {:version => raw_config} unless raw_config.is_a?(Hash)
 
       if raw_config[:version]
-        unless self.class.versions.include?(raw_config[:version])
+        if self.class.versions(raw_config[:version]).empty?
           raise ConfigError.new("you don't have rails #{raw_config[:version]} installed")
         end
       else
@@ -15,7 +15,7 @@ class SdocAll
       end
 
       @config = {
-        :version => raw_config.delete(:version) || self.class.versions.last,
+        :version => self.class.versions(raw_config.delete(:version)).last,
       }
 
       raise_unknown_options_if_not_blank!(raw_config)
@@ -23,13 +23,13 @@ class SdocAll
 
     def add_tasks(options = {})
       version = config[:version]
-      path = sources_path + version
+      path = sources_path + "r#{version}"
 
       unless path.directory?
         Base.remove_if_present(path)
         sources_path
-        Base.with_env 'VERSION', version do
           Base.system('rails', path, '--freeze')
+        Base.with_env 'VERSION', version.to_s do
         end
       end
       self.class.used_sources << path
@@ -57,12 +57,12 @@ class SdocAll
     end
 
     class << self
-      def versions
+      def versions(version_string = nil)
         [].tap do |versions|
-          Gem.source_index.search(Gem::Dependency.new('rails')).each do |spec|
+          Gem.source_index.search(Gem::Dependency.new('rails', version_string)).each do |spec|
             versions << spec.version
           end
-        end.sort.map(&:to_s)
+        end.sort
       end
     end
   end
