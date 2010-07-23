@@ -117,9 +117,9 @@ class SdocAll
       config = YAML.load_file('config.yml').symbolize_keys rescue {}
 
       min_update_interval = if config[:min_update_interval].to_s[/(\d+)\s*(.*)/]
-        $1.to_i.send({'d' => :days, 'h' => :hours, 'm' => :minutes}[$2[0, 1].downcase] || :seconds)
+        $1.to_i.send({'m' => :months, 'w' => :weeks, 'd' => :days, 'h' => :hours, 'm' => :minutes}[$2[0, 1].downcase] || :days)
       else
-        1.hour
+        1.week
       end
 
       created = last_build_sdoc_version_path.mtime rescue nil
