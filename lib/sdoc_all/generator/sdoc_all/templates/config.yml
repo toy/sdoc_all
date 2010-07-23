@@ -1,5 +1,5 @@
 ---
-min_update_interval: 1 hour
+min_update_interval: 1 week # minutes, hours, days, weeks, months
 title: "ruby, rails, gems"
 sdoc: # watch indent in this section - it must be 4 spaces
 - ruby:
