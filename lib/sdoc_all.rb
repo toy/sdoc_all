@@ -127,7 +127,7 @@ class SdocAll
               Base.system(*cmd + paths)
 
               if Base.public_path.directory?
-                File.symlink(Base.docs_path, Base.public_path + 'docs')
+                (Base.public_path + 'docs').make_symlink(Base.docs_path.relative_path_from(Base.public_path))
                 config_hash_path.open('w') do |f|
                   f.write(config_hash)
                 end
