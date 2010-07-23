@@ -170,7 +170,7 @@ class SdocAll
       def remove_if_present(path)
         path = Pathname(path)
         if path.exist?
-          puts "rm -r #{path.shellescape}".magenta
+          puts "rm -r #{path.to_s.shellescape}".magenta
           FileUtils.remove_entry(path) unless dry_run?
         end
       end
