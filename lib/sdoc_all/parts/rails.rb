@@ -41,26 +41,25 @@ class SdocAll
       end
       self.class.used_sources << path
 
-      paths = FileList.new
-      Base.chdir(path) do
-        File.open('vendor/rails/railties/lib/tasks/documentation.rake') do |f|
-          true until f.readline['Rake::RDocTask.new("rails")']
-          until (line = f.readline.strip) == '}'
-            if line['rdoc.rdoc_files.include']
-              paths.include(line[/'(.*)'/, 1])
-            elsif line['rdoc.rdoc_files.exclude']
-              paths.exclude(line[/'(.*)'/, 1])
-            end
-          end
-        end
-        paths.resolve
-      end
       Base.add_task(
         :src_path => path,
         :doc_path => "rails-#{version}",
-        :paths => paths.to_a,
+        :paths => get_paths(path),
         :title => "rails-#{version}"
       )
+    end
+
+    def get_paths(app_dir)
+      args = 'ruby', '-e', <<-RUBY.strip, app_dir.to_s
+        require 'rubygems'
+        require 'rake'
+        require 'rake/rdoctask'
+
+        Rake::RDocTask.class_eval{ def define; puts rdoc_files if name == 'rails'; end }
+
+        Dir.chdir(ARGV.first){ load('Rakefile') }
+      RUBY
+      IO.popen(args.shelljoin, &:readlines).map(&:strip)
     end
 
     class << self
