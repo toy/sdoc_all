@@ -50,7 +50,7 @@ class SdocAll
     end
 
     def get_paths(app_dir)
-      args = 'ruby', '-e', <<-RUBY.strip, app_dir.to_s
+      code = %{
         require 'rubygems'
         require 'rake'
         require 'rake/rdoctask'
@@ -58,7 +58,8 @@ class SdocAll
         Rake::RDocTask.class_eval{ def define; puts rdoc_files if name == 'rails'; end }
 
         Dir.chdir(ARGV.first){ load('Rakefile') }
-      RUBY
+      }.strip.gsub(/\s*\n\s*/m, '; ')
+      args = 'ruby', '-e', code, app_dir.to_s
       IO.popen(args.shelljoin, &:readlines).map(&:strip)
     end
 
