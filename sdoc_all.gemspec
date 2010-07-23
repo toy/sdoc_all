@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Boba Fat"]
-  s.date = %q{2010-04-28}
+  s.date = %q{2010-07-23}
   s.default_executable = %q{sdoc-all}
   s.description = %q{Command line tool to get documentation for ruby, rails, gems and plugins in one place}
   s.executables = ["sdoc-all"]
@@ -54,7 +54,7 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/toy/sdoc_all}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.6}
+  s.rubygems_version = %q{1.3.7}
   s.summary = %q{Documentation for everything}
   s.test_files = [
     "spec/sdoc_all/file_list_spec.rb",
@@ -71,15 +71,15 @@ Gem::Specification.new do |s|
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
-    if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<activesupport>, ["= 2.3.5"])
+    if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
+      s.add_runtime_dependency(%q<activesupport>, ["< 3.beta"])
       s.add_runtime_dependency(%q<colored>, [">= 0"])
       s.add_runtime_dependency(%q<progress>, [">= 0.0.8"])
       s.add_runtime_dependency(%q<rake>, [">= 0"])
       s.add_runtime_dependency(%q<rubigen>, [">= 0"])
       s.add_runtime_dependency(%q<sdoc>, [">= 0"])
     else
-      s.add_dependency(%q<activesupport>, ["= 2.3.5"])
+      s.add_dependency(%q<activesupport>, ["< 3.beta"])
       s.add_dependency(%q<colored>, [">= 0"])
       s.add_dependency(%q<progress>, [">= 0.0.8"])
       s.add_dependency(%q<rake>, [">= 0"])
@@ -87,7 +87,7 @@ Gem::Specification.new do |s|
       s.add_dependency(%q<sdoc>, [">= 0"])
     end
   else
-    s.add_dependency(%q<activesupport>, ["= 2.3.5"])
+    s.add_dependency(%q<activesupport>, ["< 3.beta"])
     s.add_dependency(%q<colored>, [">= 0"])
     s.add_dependency(%q<progress>, [">= 0.0.8"])
     s.add_dependency(%q<rake>, [">= 0"])
