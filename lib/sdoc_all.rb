@@ -83,10 +83,7 @@ class SdocAll
           Base.remove_if_present(Base.docs_path)
         else
           Base.chdir(Base.docs_path) do
-            to_delete = Dir.glob('*')
-            tasks.each do |task|
-              to_delete -= task.occupied_doc_pathes
-            end
+            to_delete = Dir.glob('*') - tasks.map(&:occupied_doc_pathes).flatten
             to_delete.each do |path|
               Base.remove_if_present(path)
             end
