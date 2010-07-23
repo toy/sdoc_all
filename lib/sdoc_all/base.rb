@@ -1,4 +1,4 @@
-require 'shell_escape'
+require 'shellwords'
 
 class SdocAll
   class Base
@@ -131,7 +131,7 @@ class SdocAll
 
       def system(*args)
         args = args.map(&:to_s)
-        command = args.length == 1 ? args.first : ShellEscape.command(*args)
+        command = args.length == 1 ? args.first : args.shelljoin
         if verbose_level >= 1
           puts [dirs.last && "cd #{dirs.last}", command].compact.join('; ').shrink(250).blue
         end
@@ -170,7 +170,7 @@ class SdocAll
       def remove_if_present(path)
         path = Pathname(path)
         if path.exist?
-          puts "rm -r #{ShellEscape.word(path)}".magenta
+          puts "rm -r #{path.shellescape}".magenta
           FileUtils.remove_entry(path) unless dry_run?
         end
       end

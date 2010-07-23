@@ -39,7 +39,6 @@ Gem::Specification.new do |s|
      "lib/sdoc_all/parts/rails.rb",
      "lib/sdoc_all/parts/ruby.rb",
      "lib/sdoc_all/task.rb",
-     "lib/shell_escape.rb",
      "lib/tasks/sdoc_all_rake.rb",
      "sdoc_all.gemspec",
      "spec/sdoc_all/file_list_spec.rb",
