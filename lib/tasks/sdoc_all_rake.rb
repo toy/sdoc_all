@@ -3,7 +3,7 @@ require 'sdoc_all'
 task :default => :run
 
 def run_options
-  dry_run = %w[1 t T].include?(ENV['DRY_RUN'][0, 1])
+  dry_run = ENV['DRY_RUN'] && %w[1 t T].include?(ENV['DRY_RUN'][0, 1])
   verbose_level = ENV['VERBOSE_LEVEL'].to_i
   {
     :dry_run => dry_run,
