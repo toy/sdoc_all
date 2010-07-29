@@ -57,6 +57,10 @@ class SdocAll
 
         Rake::RDocTask.class_eval{ def define; puts rdoc_files if name == 'rails'; end }
 
+        class RDocTaskWithoutDescriptions < Rake::RDocTask
+          def initialize(name = :rdoc); super; puts rdoc_files if name == 'rails'; end
+        end
+
         Dir.chdir(ARGV.first){ load('Rakefile') }
       }.strip.gsub(/\s*\n\s*/m, '; ')
       args = 'ruby', '-e', code, app_dir.to_s
