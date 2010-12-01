@@ -5,8 +5,6 @@ require 'fileutils'
 require 'find'
 require 'digest'
 
-require 'rubygems'
-require 'active_support'
 require 'rake'
 require 'progress'
 require 'colored'
