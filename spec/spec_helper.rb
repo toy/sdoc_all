@@ -1,11 +1,8 @@
-require 'rubygems'
-gem 'rspec'
-require 'spec'
-require 'stringio'
-
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
+$:.unshift File.join(File.dirname(__FILE__), '..', 'lib')
+require 'rspec'
 require 'sdoc_all'
+
+require 'stringio'
 
 Spec::Runner.configure do |config|
   config.prepend_before do
