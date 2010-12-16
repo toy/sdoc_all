@@ -8,6 +8,7 @@ require 'digest'
 require 'rake'
 require 'progress'
 require 'colored'
+require 'activesupport'
 
 __DIR__ = File.dirname(__FILE__)
 $:.unshift(__DIR__) unless $:.include?(__DIR__) || $:.include?(File.expand_path(__DIR__))
