@@ -8,7 +8,7 @@ name = 'sdoc_all'
 Jeweler::Tasks.new do |gem|
   gem.name = name
   gem.summary = %Q{Documentation for everything}
-  gem.description = %Q{Command line tool to get documentation for ruby, rails, gems and plugins in one place}
+  gem.description = %Q{WARNING: sdoc_all is no longer maintained, try doc gem\nCommand line tool to get documentation for ruby, rails, gems and plugins in one place}
   gem.homepage = "http://github.com/toy/#{name}"
   gem.license = 'MIT'
   gem.authors = ['Ivan Kuchin']
