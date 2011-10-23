@@ -3,7 +3,7 @@ Command line tool to get documentation for ruby, rails, gems, plugins and other 
 
 ## Getting Started
 
-    sudo gem install voloko-sdoc sdoc_all
+    gem install sdoc_all
     sdoc-all <place for your documentation>; cd <place for your documentation>
     <your favorite editor> config.yml
     rake run
