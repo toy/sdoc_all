@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby -KU
 
+$stderr.puts 'WARNING: sdoc_all is no longer maintained, try doc gem'
+
 require 'rubygems'
 require 'rubigen'
 

@@ -1,6 +1,9 @@
 # sdoc-all
 Command line tool to get documentation for ruby, rails, gems, plugins and other ruby code in one place
 
+## Warning
+This gem is no longer maintained, try [doc gem](https://rubygems.org/gems/doc) — it is sdoc_all <del>with blackjack and hookers!</del> rewritten from scratch.
+
 ## Getting Started
 
     gem install sdoc_all

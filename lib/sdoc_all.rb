@@ -42,6 +42,14 @@ class SdocAll
     end
 
     def run(options = {})
+      message = 'WARNING: sdoc_all is no longer maintained, try doc gem'
+      $stderr.puts message
+      run!(options)
+    ensure
+      $stderr.puts message
+    end
+
+    def run!(options = {})
       Base.dry_run! if options[:dry_run]
       Base.verbose_level = options[:verbose_level]
       Progress.lines = true if Base.verbose_level >= 1
