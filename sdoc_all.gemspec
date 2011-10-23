@@ -5,12 +5,12 @@
 
 Gem::Specification.new do |s|
   s.name = "sdoc_all"
-  s.version = "1.3.1"
+  s.version = "1.3.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Ivan Kuchin"]
   s.date = "2011-10-23"
-  s.description = "Command line tool to get documentation for ruby, rails, gems and plugins in one place"
+  s.description = "WARNING: sdoc_all is no longer maintained, try doc gem\nCommand line tool to get documentation for ruby, rails, gems and plugins in one place"
   s.executables = ["sdoc-all"]
   s.extra_rdoc_files = [
     "LICENSE.txt",
