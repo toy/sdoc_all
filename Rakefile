@@ -13,7 +13,7 @@ Jeweler::Tasks.new do |gem|
   gem.license = 'MIT'
   gem.authors = ['Ivan Kuchin']
 
-  gem.add_runtime_dependency 'activesupport', '~> 2.3'
+  gem.add_runtime_dependency 'activesupport', '~> 2.3.0'
   gem.add_runtime_dependency 'colored'
   gem.add_runtime_dependency 'progress', '>= 0.0.8'
   gem.add_runtime_dependency 'rake'
